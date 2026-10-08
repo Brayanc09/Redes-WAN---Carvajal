@@ -271,67 +271,245 @@
        1. DATOS
        ========================================= -->
 
-  <section id="datos" class="card">
+  <!-- =========================================
+     1. REQUERIMIENTOS DEL PROYECTO
+     ========================================= -->
 
-    <h2>Datos generales del proyecto</h2>
+<section id="datos" class="card">
 
-    <p>
-      Primero definimos la información básica de la red.
-      Estos datos serán utilizados posteriormente por
-      Subnetting, Topología, Configuración y Ciberdefensa.
-    </p>
+  <h2>Requerimientos para el diseño de red</h2>
 
-    <div class="grid">
+  <p>
+    Define las necesidades de la red. Esta información será
+    utilizada posteriormente para calcular el direccionamiento,
+    diseñar la topología y generar las configuraciones.
+  </p>
 
-      <div>
-        <label>Nombre del proyecto</label>
-        <input
-          id="projectName"
-          type="text"
-          placeholder="Ejemplo: Red Edificio Principal">
-      </div>
 
-      <div>
-        <label>Sede</label>
-        <input
-          id="siteName"
-          type="text"
-          placeholder="Ejemplo: Sede Bogotá">
-      </div>
+  <!-- ================================
+       INFRAESTRUCTURA
+       ================================ -->
 
-      <div>
-        <label>Número de pisos</label>
-        <input
-          id="floors"
-          type="number"
-          min="1"
-          placeholder="Ejemplo: 15">
-      </div>
+  <h3>🏢 Infraestructura</h3>
 
-      <div>
-        <label>Usuarios por unidad</label>
-        <input
-          id="usersPerUnit"
-          type="number"
-          min="1"
-          placeholder="Ejemplo: 4">
-      </div>
+  <div class="grid">
 
-      <div>
-        <label>Dispositivos por usuario</label>
-        <input
-          id="devicesPerUser"
-          type="number"
-          min="1"
-          placeholder="Ejemplo: 2">
-      </div>
+    <div>
+      <label>Nombre del proyecto</label>
 
+      <input
+        id="projectName"
+        type="text"
+        placeholder="Ejemplo: Red Edificio Bogotá">
     </div>
 
-    <div id="dataMessage"></div>
 
-  </section>
+    <div>
+      <label>Número de sedes</label>
 
+      <input
+        id="sites"
+        type="number"
+        min="1"
+        value="1">
+    </div>
+
+
+    <div>
+      <label>Pisos por sede</label>
+
+      <input
+        id="floors"
+        type="number"
+        min="1"
+        value="1">
+    </div>
+
+
+    <div>
+      <label>Áreas / unidades por piso</label>
+
+      <input
+        id="unitsPerFloor"
+        type="number"
+        min="1"
+        value="1">
+    </div>
+
+
+    <div>
+      <label>Usuarios por área</label>
+
+      <input
+        id="usersPerUnit"
+        type="number"
+        min="1"
+        value="1">
+    </div>
+
+  </div>
+
+
+  <!-- ================================
+       DISPOSITIVOS
+       ================================ -->
+
+  <h3>💻 Dispositivos</h3>
+
+  <div class="grid">
+
+    <div>
+      <label>Dispositivos por usuario</label>
+
+      <input
+        id="devicesPerUser"
+        type="number"
+        min="1"
+        value="1">
+    </div>
+
+
+    <div>
+      <label>Cámaras por área</label>
+
+      <input
+        id="camerasPerUnit"
+        type="number"
+        min="0"
+        value="0">
+    </div>
+
+
+    <div>
+      <label>Teléfonos IP por usuario</label>
+
+      <input
+        id="phonesPerUser"
+        type="number"
+        min="0"
+        value="0">
+    </div>
+
+
+    <div>
+      <label>Servidores</label>
+
+      <input
+        id="servers"
+        type="number"
+        min="0"
+        value="0">
+    </div>
+
+  </div>
+
+
+  <!-- ================================
+       CAPACIDAD
+       ================================ -->
+
+  <h3>🌐 Capacidad de red</h3>
+
+  <div class="grid">
+
+    <div>
+      <label>Mbps por usuario</label>
+
+      <input
+        id="mbpsPerUser"
+        type="number"
+        min="1"
+        value="10">
+    </div>
+
+
+    <div>
+      <label>Concurrencia (%)</label>
+
+      <input
+        id="concurrency"
+        type="number"
+        min="1"
+        max="100"
+        value="80">
+    </div>
+
+
+    <div>
+      <label>Reserva de capacidad (%)</label>
+
+      <input
+        id="reserve"
+        type="number"
+        min="0"
+        max="100"
+        value="20">
+    </div>
+
+
+    <div>
+      <label>Uplink mínimo (Mbps)</label>
+
+      <input
+        id="uplink"
+        type="number"
+        min="1"
+        value="1000">
+    </div>
+
+  </div>
+
+
+  <!-- ================================
+       DIRECCIONAMIENTO
+       ================================ -->
+
+  <h3>🌎 Direccionamiento</h3>
+
+  <div class="grid">
+
+    <div>
+      <label>Red IPv4 principal</label>
+
+      <input
+        id="ipv4Main"
+        type="text"
+        placeholder="Ejemplo: 10.0.0.0/8">
+    </div>
+
+
+    <div>
+      <label>Red IPv6 principal</label>
+
+      <input
+        id="ipv6Main"
+        type="text"
+        placeholder="Ejemplo: 2001:db8::/48">
+    </div>
+
+  </div>
+
+
+  <!-- ================================
+       RESULTADOS DE LOS REQUERIMIENTOS
+       ================================ -->
+
+  <div class="actions">
+
+    <button
+      class="primary"
+      onclick="calculateRequirements()">
+      Calcular requerimientos
+    </button>
+
+  </div>
+
+
+  <div id="requirementsMessage"></div>
+
+  <div id="requirementsResults"></div>
+
+</section>
 
   <!-- =========================================
        2. SUBNETTING / VLSM
@@ -362,6 +540,11 @@
         onclick="calculateVLSM()">
         Calcular VLSM
       </button>
+
+<button
+  onclick="generateSegmentsFromRequirements()">
+  Generar segmentos desde requerimientos
+</button>
 
     </div>
 
@@ -933,7 +1116,497 @@
     renderMainNetworks();
   }
 
+/*
+  ============================================
+  CALCULAR REQUERIMIENTOS DE LA RED
+  ============================================
 
+  Esta función toma los datos ingresados por el
+  usuario y calcula las necesidades generales
+  de la infraestructura.
+
+  Ejemplo:
+
+  sedes × pisos × áreas × usuarios
+  = usuarios totales
+
+  usuarios totales × dispositivos
+  = dispositivos de usuarios
+*/
+
+function calculateRequirements() {
+
+  const message =
+    document.getElementById("requirementsMessage");
+
+  const results =
+    document.getElementById("requirementsResults");
+
+
+  /*
+    --------------------------------------------
+    1. OBTENER DATOS DEL FORMULARIO
+    --------------------------------------------
+  */
+
+  const projectName =
+    document.getElementById("projectName").value.trim();
+
+  const sites =
+    Number(document.getElementById("sites").value);
+
+  const floors =
+    Number(document.getElementById("floors").value);
+
+  const unitsPerFloor =
+    Number(document.getElementById("unitsPerFloor").value);
+
+  const usersPerUnit =
+    Number(document.getElementById("usersPerUnit").value);
+
+  const devicesPerUser =
+    Number(document.getElementById("devicesPerUser").value);
+
+  const camerasPerUnit =
+    Number(document.getElementById("camerasPerUnit").value);
+
+  const phonesPerUser =
+    Number(document.getElementById("phonesPerUser").value);
+
+  const servers =
+    Number(document.getElementById("servers").value);
+
+  const mbpsPerUser =
+    Number(document.getElementById("mbpsPerUser").value);
+
+  const concurrency =
+    Number(document.getElementById("concurrency").value);
+
+  const reserve =
+    Number(document.getElementById("reserve").value);
+
+  const uplink =
+    Number(document.getElementById("uplink").value);
+
+
+  /*
+    --------------------------------------------
+    2. VALIDAR INFORMACIÓN
+    --------------------------------------------
+  */
+
+  if (!projectName) {
+
+    showRequirementError(
+      "Debe ingresar el nombre del proyecto."
+    );
+
+    return;
+  }
+
+
+  const numericValues = [
+    sites,
+    floors,
+    unitsPerFloor,
+    usersPerUnit,
+    devicesPerUser,
+    camerasPerUnit,
+    phonesPerUser,
+    servers,
+    mbpsPerUser,
+    concurrency,
+    reserve,
+    uplink
+  ];
+
+
+  if (
+    numericValues.some(
+      value => !Number.isFinite(value) || value < 0
+    )
+  ) {
+
+    showRequirementError(
+      "Los valores numéricos deben ser válidos y no negativos."
+    );
+
+    return;
+  }
+
+
+  if (
+    sites < 1 ||
+    floors < 1 ||
+    unitsPerFloor < 1 ||
+    usersPerUnit < 1 ||
+    devicesPerUser < 1 ||
+    mbpsPerUser < 1 ||
+    uplink < 1
+  ) {
+
+    showRequirementError(
+      "Sedes, pisos, áreas, usuarios, dispositivos, Mbps y uplink deben ser mayores que cero."
+    );
+
+    return;
+  }
+
+
+  if (concurrency > 100 || reserve > 100) {
+
+    showRequirementError(
+      "La concurrencia y la reserva no pueden superar el 100%."
+    );
+
+    return;
+  }
+
+
+  /*
+    --------------------------------------------
+    3. CALCULAR INFRAESTRUCTURA
+    --------------------------------------------
+  */
+
+  const totalUnits =
+    sites *
+    floors *
+    unitsPerFloor;
+
+
+  const totalUsers =
+    totalUnits *
+    usersPerUnit;
+
+
+  /*
+    --------------------------------------------
+    4. CALCULAR DISPOSITIVOS
+    --------------------------------------------
+  */
+
+  const userDevices =
+    totalUsers *
+    devicesPerUser;
+
+
+  const totalCameras =
+    totalUnits *
+    camerasPerUnit;
+
+
+  const totalPhones =
+    totalUsers *
+    phonesPerUser;
+
+
+  const totalDevices =
+    userDevices +
+    totalCameras +
+    totalPhones +
+    servers;
+
+
+  /*
+    --------------------------------------------
+    5. CALCULAR ANCHO DE BANDA
+    --------------------------------------------
+  */
+
+  const bandwidthBase =
+    totalUsers *
+    mbpsPerUser;
+
+
+  const bandwidthConcurrent =
+    bandwidthBase *
+    (concurrency / 100);
+
+
+  const bandwidthWithReserve =
+    bandwidthConcurrent *
+    (1 + reserve / 100);
+
+
+  /*
+    --------------------------------------------
+    6. VERIFICAR UPLINK
+    --------------------------------------------
+  */
+
+  const uplinkStatus =
+    uplink >= bandwidthWithReserve
+      ? "Adecuado"
+      : "Insuficiente";
+
+
+  /*
+    --------------------------------------------
+    7. MOSTRAR RESULTADOS
+    --------------------------------------------
+  */
+
+  message.className =
+    "message success";
+
+  message.textContent =
+    "Los requerimientos fueron calculados correctamente.";
+
+
+  results.innerHTML = `
+
+    <div class="card">
+
+      <h3>Resumen del proyecto</h3>
+
+      <p>
+        <strong>Proyecto:</strong>
+        ${projectName}
+      </p>
+
+
+      <h3>Infraestructura</h3>
+
+      <div class="grid">
+
+        <div>
+          <strong>Sedes</strong>
+          <p>${sites}</p>
+        </div>
+
+        <div>
+          <strong>Áreas totales</strong>
+          <p>${totalUnits}</p>
+        </div>
+
+        <div>
+          <strong>Usuarios totales</strong>
+          <p>${totalUsers}</p>
+        </div>
+
+      </div>
+
+
+      <h3>Dispositivos</h3>
+
+      <div class="grid">
+
+        <div>
+          <strong>Dispositivos de usuarios</strong>
+          <p>${userDevices}</p>
+        </div>
+
+        <div>
+          <strong>Cámaras</strong>
+          <p>${totalCameras}</p>
+        </div>
+
+        <div>
+          <strong>Teléfonos IP</strong>
+          <p>${totalPhones}</p>
+        </div>
+
+        <div>
+          <strong>Servidores</strong>
+          <p>${servers}</p>
+        </div>
+
+        <div>
+          <strong>Total de dispositivos</strong>
+          <p>${totalDevices}</p>
+        </div>
+
+      </div>
+
+
+      <h3>Capacidad de red</h3>
+
+      <div class="grid">
+
+        <div>
+          <strong>Demanda base</strong>
+          <p>${bandwidthBase.toFixed(2)} Mbps</p>
+        </div>
+
+        <div>
+          <strong>Concurrencia</strong>
+          <p>${bandwidthConcurrent.toFixed(2)} Mbps</p>
+        </div>
+
+        <div>
+          <strong>Con reserva</strong>
+          <p>${bandwidthWithReserve.toFixed(2)} Mbps</p>
+        </div>
+
+        <div>
+          <strong>Uplink configurado</strong>
+          <p>${uplink} Mbps</p>
+        </div>
+
+        <div>
+          <strong>Estado del uplink</strong>
+          <p>${uplinkStatus}</p>
+        </div>
+
+      </div>
+
+    </div>
+
+  `;
+}
+
+
+/*
+  ============================================
+  MOSTRAR ERROR DE REQUERIMIENTOS
+  ============================================
+*/
+
+function showRequirementError(messageText) {
+
+  const message =
+    document.getElementById("requirementsMessage");
+
+  const results =
+    document.getElementById("requirementsResults");
+
+
+  message.className =
+    "message error";
+
+  message.textContent =
+    messageText;
+
+  results.innerHTML = "";
+}
+
+function generateSegmentsFromRequirements() {
+
+  const ipv4Main =
+    document.getElementById("ipv4Main").value.trim();
+
+  const sites =
+    Number(document.getElementById("sites").value);
+
+  const floors =
+    Number(document.getElementById("floors").value);
+
+  const unitsPerFloor =
+    Number(document.getElementById("unitsPerFloor").value);
+
+  const usersPerUnit =
+    Number(document.getElementById("usersPerUnit").value);
+
+  const devicesPerUser =
+    Number(document.getElementById("devicesPerUser").value);
+
+  const camerasPerUnit =
+    Number(document.getElementById("camerasPerUnit").value);
+
+  const phonesPerUser =
+    Number(document.getElementById("phonesPerUser").value);
+
+  const servers =
+    Number(document.getElementById("servers").value);
+
+
+  if (!ipv4Main) {
+    alert("Debes ingresar una red IPv4 principal.");
+    return;
+  }
+
+
+  const totalUnits =
+    sites * floors * unitsPerFloor;
+
+  const totalUsers =
+    totalUnits * usersPerUnit;
+
+  const userDevices =
+    totalUsers * devicesPerUser;
+
+  const totalCameras =
+    totalUnits * camerasPerUnit;
+
+  const totalPhones =
+    totalUsers * phonesPerUser;
+
+
+  const segments = [];
+
+
+  if (userDevices > 0) {
+    segments.push({
+      name: "USUARIOS",
+      hosts: userDevices,
+      type: "LAN",
+      vlan: 20
+    });
+  }
+
+
+  if (totalCameras > 0) {
+    segments.push({
+      name: "CCTV",
+      hosts: totalCameras,
+      type: "LAN",
+      vlan: 40
+    });
+  }
+
+
+  if (totalPhones > 0) {
+    segments.push({
+      name: "VOZ",
+      hosts: totalPhones,
+      type: "LAN",
+      vlan: 30
+    });
+  }
+
+
+  if (servers > 0) {
+    segments.push({
+      name: "SERVIDORES",
+      hosts: servers,
+      type: "LAN",
+      vlan: 60
+    });
+  }
+
+
+  mainNetworks = [{
+    id: Date.now(),
+    name:
+      document.getElementById("projectName").value.trim()
+      || "Red principal",
+    network: ipv4Main,
+    segments: segments
+  }];
+
+
+  renderMainNetworks();
+
+
+  const subnettingButton =
+    document.querySelectorAll(".tab")[1];
+
+  showSection(
+    "subnetting",
+    subnettingButton
+  );
+
+
+  const message =
+    document.getElementById("vlsmMessage");
+
+  message.className =
+    "message success";
+
+  message.textContent =
+    "Segmentos generados correctamente desde los requerimientos.";
+}
   /*
     ============================================
     CALCULAR VLSM
@@ -1123,7 +1796,7 @@
                         </td>
 
                         <td>
-                          ${subnet.requestedHosts}
+                          ${subnet.hostsRequested}
                         </td>
 
                         <td>
