@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NetBuilding - Pruebas VLSM A.4</title>
+<style>
+body{font-family:Arial,sans-serif;max-width:1000px;margin:40px auto;padding:0 20px;background:#f4f6f8;color:#1f2937}
+.card{background:white;border-radius:12px;padding:24px;box-shadow:0 2px 12px rgba(0,0,0,.08)}
+h1{margin-top:0}.summary{font-size:20px;font-weight:bold;margin:20px 0}.pass{color:#16803c}.fail{color:#b42318}li{margin:8px 0;font-family:Consolas,monospace}.bar{padding:12px;border-radius:8px;background:#e8f7ed}.bar.fail{background:#fdecec}
+</style>
+</head>
+<body>
+<div class="card">
+<h1>NetBuilding — Pruebas VLSM A.4</h1>
+<p>Prueba automática del motor <strong>DEV-001</strong>.</p>
+<div id="summary">Ejecutando...</div>
+<ol id="results"></ol>
+</div>
+<script src="../frontend/js/subnetting.js"></script>
+<script>
+(function(){
+  const tests=[];
+  function test(name,fn){
+    try{fn();tests.push({name,ok:true});}
+    catch(e){tests.push({name,ok:false,error:e.message});}
+  }
+  const v=window.NetBuildingVLSM;
+  test('IPv4 a número y regreso',()=>{
+    const n=v.ipv4ToNumber('192.168.10.1');
+    if(v.numberToIpv4(n)!=='192.168.10.1')throw Error('Conversión incorrecta');
+  });
+  test('CIDR /24 calcula máscara y broadcast',()=>{
+    const r=v.parseCidr('192.168.10.0/24');
+    if(r.mask!=='255.255.255.0'||r.broadcast!=='192.168.10.255'||r.usableHosts!==254)throw Error('Resultado incorrecto');
+  });
+  test('VLSM 100, 30, 10 y 6 hosts',()=>{
+    const r=v.allocateVLSM('192.168.10.0/24',[
+      {name:'Usuarios',hosts:100},{name:'CCTV',hosts:30},{name:'Administracion',hosts:10},{name:'Servidores',hosts:6}
+    ]);
+    const x=Object.fromEntries(r.subnets.map(s=>[s.name,s]));
+    if(x.Usuarios.networkCidr!=='192.168.10.0/25')throw Error('Usuarios incorrecto');
+    if(x.CCTV.networkCidr!=='192.168.10.128/27')throw Error('CCTV incorrecto');
+    if(x.Administracion.networkCidr!=='192.168.10.160/28')throw Error('Administración incorrecta');
+    if(x.Servidores.networkCidr!=='192.168.10.176/29')throw Error('Servidores incorrecto');
+    if(r.summary.remainingAddresses!==72)throw Error('Espacio restante incorrecto');
+  });
+  test('Dos redes principales independientes',()=>{
+    const r=v.calculateMultipleNetworks([
+      {name:'Sede Norte',network:'10.10.0.0/24',segments:[{name:'Usuarios',hosts:50}]},
+      {name:'Sede Sur',network:'10.20.0.0/24',segments:[{name:'Usuarios',hosts:50}]}
+    ]);
+    if(r.length!==2||r[0].subnets[0].networkCidr!=='10.10.0.0/26'||r[1].subnets[0].networkCidr!=='10.20.0.0/26')throw Error('Resultado incorrecto');
+  });
+  test('Tres redes principales independientes',()=>{
+    const r=v.calculateMultipleNetworks([
+      {name:'Sede 1',network:'172.16.0.0/24',segments:[{name:'LAN',hosts:20}]},
+      {name:'Sede 2',network:'172.16.1.0/24',segments:[{name:'LAN',hosts:20}]},
+      {name:'Sede 3',network:'172.16.2.0/24',segments:[{name:'LAN',hosts:20}]}
+    ]);
+    if(r.length!==3||!r.every(x=>x.summary.noOverlaps))throw Error('Resultado incorrecto');
+  });
+  test('Detecta falta de capacidad',()=>{
+    let error=false;try{v.allocateVLSM('192.168.10.0/28',[{name:'Usuarios',hosts:20}]);}catch(e){error=true;}
+    if(!error)throw Error('No detectó capacidad insuficiente');
+  });
+  test('Detecta redes principales solapadas',()=>{
+    let error=false;try{v.calculateMultipleNetworks([
+      {name:'Red A',network:'192.168.1.0/24',segments:[{name:'LAN',hosts:10}]},
+      {name:'Red B',network:'192.168.1.128/25',segments:[{name:'LAN',hosts:10}]}
+    ]);}catch(e){error=/solapan/i.test(e.message);}
+    if(!error)throw Error('No detectó solapamiento');
+  });
+  test('P2P de 2 hosts usa /31',()=>{
+    const r=v.allocateVLSM('10.0.0.0/30',[{name:'Enlace',hosts:2,type:'P2P'}]);
+    if(r.subnets[0].networkCidr!=='10.0.0.0/31'||r.subnets[0].usableHosts!==2)throw Error('P2P incorrecto');
+  });
+  test('Loopback de 1 dirección usa /32',()=>{
+    const r=v.allocateVLSM('10.0.0.0/30',[{name:'Loopback',hosts:1,type:'LOOPBACK'}]);
+    if(r.subnets[0].networkCidr!=='10.0.0.0/32'||r.subnets[0].usableHosts!==1)throw Error('Loopback incorrecto');
+  });
+  test('CIDR con IP de host se normaliza',()=>{
+    const r=v.parseCidr('192.168.10.55/24');
+    if(r.network!=='192.168.10.0'||r.broadcast!=='192.168.10.255')throw Error('Normalización incorrecta');
+  });
+  const passed=tests.filter(x=>x.ok).length, failed=tests.length-passed, confidence=(passed/tests.length*100).toFixed(2);
+  const summary=document.getElementById('summary');
+  summary.className=failed?'summary bar fail':'summary bar';
+  summary.innerHTML=`Pruebas: ${tests.length} | Exitosas: <span class="pass">${passed}</span> | Fallidas: <span class="fail">${failed}</span> | Confianza: <strong>${confidence}%</strong>`;
+  document.getElementById('results').innerHTML=tests.map((t,i)=>`<li class="${t.ok?'pass':'fail'}">${t.ok?'PASS':'FAIL'} — ${i+1}. ${t.name}${t.error?' — '+t.error:''}</li>`).join('');
+})();
+</script>
+</body>
+</html>

@@ -53,6 +53,18 @@ pre{background:#111827;color:#e5e7eb;padding:14px;border-radius:8px;overflow:aut
 
 <section id="ip" class="tab">
 <div class="card"><h2>Direccionamiento IPv4 / IPv6 y VLAN</h2><p class="small">Plan inicial editable conceptualmente; los prefijos se pueden ajustar al proyecto.</p><div id="vlanTable"></div></div>
+
+<div class="card" id="vlsmCard">
+<h2>VLSM — múltiples redes principales</h2>
+<p class="small">[DEV-001] Agrega una o varias redes principales y distribuye segmentos automáticamente con VLSM.</p>
+<div class="actions">
+<button class="primary" onclick="addVlsmNetwork()">+ Agregar red principal</button>
+<button onclick="calculateVlsmDashboard()">Calcular VLSM</button>
+</div>
+<div id="vlsmNetworks"></div>
+<div id="vlsmMessage" class="notice" style="margin-top:12px">Listo para calcular VLSM.</div>
+<div id="vlsmResults" style="margin-top:12px"></div>
+</div>
 </section>
 
 <section id="wan" class="tab">
@@ -127,6 +139,7 @@ pre{background:#111827;color:#e5e7eb;padding:14px;border-radius:8px;overflow:aut
 </section>
 </main>
 
+<script src="js/subnetting.js"></script>
 <script>
 // [DEV-016] Navegación
 const tabs=[["datos","Datos"],["diseno","Diseño"],["ip","IP/VLAN"],["wan","WAN/Routing"],["seguridad","Seguridad"],["equipos","Equipos"],["protocolos","Protocolos"],["config","Configuración"],["agente","Agente IA"],["verificacion","Verificación"],["versiones","Versiones"],["desarrollador","Desarrollador"]];
@@ -144,6 +157,151 @@ const MODELS={Cisco:["Catalyst IOS / IOS XE","ISR IOS / IOS XE"],Huawei:["S Seri
 function loadModels(){model.innerHTML=MODELS[vendor.value].map(x=>`<option>${x}</option>`).join("");showCapabilities()}
 function showCapabilities(){capabilities.innerHTML=`<b>Referencia:</b> ${vendor.value} / ${model.value} / ${os.value}<br><span class="small">Capacidades y sintaxis exactas deben contrastarse con la referencia real antes de aplicar.</span>`}
 vendor.addEventListener("change",showCapabilities);model.addEventListener("change",showCapabilities);os.addEventListener("input",showCapabilities);
+
+// [DEV-001-VLSM] Integración del motor VLSM al dashboard
+let vlsmNetworks = [
+    {
+        name: "Red Principal 1",
+        network: "192.168.10.0/24",
+        segments: [
+            { name: "Usuarios", hosts: 100, type: "LAN" },
+            { name: "CCTV", hosts: 30, type: "LAN" },
+            { name: "Administracion", hosts: 10, type: "LAN" },
+            { name: "Servidores", hosts: 6, type: "LAN" }
+        ]
+    }
+];
+
+function renderVlsmNetworks() {
+    const container = document.getElementById("vlsmNetworks");
+    if (!container) return;
+
+    container.innerHTML = vlsmNetworks.map((network, ni) => `
+        <div class="card" style="margin-top:12px;background:#f8faff">
+            <div class="grid">
+                <div>
+                    <label>Nombre de la red principal</label>
+                    <input value="${escapeVlsm(network.name)}" onchange="updateVlsmNetwork(${ni}, 'name', this.value)">
+                </div>
+                <div>
+                    <label>Red IPv4 principal (CIDR)</label>
+                    <input value="${escapeVlsm(network.network)}" onchange="updateVlsmNetwork(${ni}, 'network', this.value)">
+                </div>
+            </div>
+            <div class="actions">
+                <button onclick="addVlsmSegment(${ni})">+ Agregar segmento</button>
+                ${vlsmNetworks.length > 1 ? `<button onclick="removeVlsmNetwork(${ni})">Eliminar red</button>` : ""}
+            </div>
+            <div style="overflow:auto;margin-top:10px">
+                <table>
+                    <tr><th>Segmento</th><th>Hosts</th><th>Tipo</th><th>Acción</th></tr>
+                    ${network.segments.map((segment, si) => `
+                    <tr>
+                        <td><input value="${escapeVlsm(segment.name)}" onchange="updateVlsmSegment(${ni},${si},'name',this.value)"></td>
+                        <td><input type="number" min="1" value="${Number(segment.hosts)}" onchange="updateVlsmSegment(${ni},${si},'hosts',this.value)"></td>
+                        <td><select onchange="updateVlsmSegment(${ni},${si},'type',this.value)">
+                            <option value="LAN" ${segment.type === "LAN" ? "selected" : ""}>LAN</option>
+                            <option value="P2P" ${segment.type === "P2P" ? "selected" : ""}>P2P</option>
+                            <option value="LOOPBACK" ${segment.type === "LOOPBACK" ? "selected" : ""}>LOOPBACK</option>
+                        </select></td>
+                        <td><button onclick="removeVlsmSegment(${ni},${si})">Eliminar</button></td>
+                    </tr>`).join("")}
+                </table>
+            </div>
+        </div>`).join("");
+}
+
+function escapeVlsm(value) {
+    return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+function updateVlsmNetwork(index, field, value) {
+    vlsmNetworks[index][field] = value;
+}
+
+function updateVlsmSegment(networkIndex, segmentIndex, field, value) {
+    vlsmNetworks[networkIndex].segments[segmentIndex][field] =
+        field === "hosts" ? Number(value) : value;
+}
+
+function addVlsmNetwork() {
+    vlsmNetworks.push({
+        name: "Red Principal " + (vlsmNetworks.length + 1),
+        network: "192.168." + (10 + vlsmNetworks.length) + ".0/24",
+        segments: [
+            { name: "Usuarios", hosts: 50, type: "LAN" }
+        ]
+    });
+    renderVlsmNetworks();
+}
+
+function removeVlsmNetwork(index) {
+    if (vlsmNetworks.length === 1) return;
+    vlsmNetworks.splice(index, 1);
+    renderVlsmNetworks();
+    document.getElementById("vlsmResults").innerHTML = "";
+}
+
+function addVlsmSegment(networkIndex) {
+    const count = vlsmNetworks[networkIndex].segments.length + 1;
+    vlsmNetworks[networkIndex].segments.push({
+        name: "Segmento " + count,
+        hosts: 10,
+        type: "LAN"
+    });
+    renderVlsmNetworks();
+}
+
+function removeVlsmSegment(networkIndex, segmentIndex) {
+    const segments = vlsmNetworks[networkIndex].segments;
+    if (segments.length === 1) return;
+    segments.splice(segmentIndex, 1);
+    renderVlsmNetworks();
+}
+
+function calculateVlsmDashboard() {
+    const message = document.getElementById("vlsmMessage");
+    const results = document.getElementById("vlsmResults");
+
+    try {
+        const calculated = NetBuildingVLSM.calculateMultipleNetworks(vlsmNetworks);
+        message.className = "notice ok";
+        message.textContent = "VLSM calculado correctamente. No se detectaron solapamientos entre redes principales.";
+
+        results.innerHTML = calculated.map((network, index) => `
+            <div class="card" style="margin-top:12px">
+                <h3>${escapeVlsm(network.name)} — ${network.parent.networkCidr}</h3>
+                <p class="small">Máscara: ${network.parent.mask} · Broadcast: ${network.parent.broadcast} · Direcciones usadas: ${network.summary.usedAddresses} · Disponibles: ${network.summary.remainingAddresses}</p>
+                <div style="overflow:auto">
+                    <table>
+                        <tr><th>Segmento</th><th>Hosts solicitados</th><th>CIDR</th><th>Red</th><th>Primer host</th><th>Último host</th><th>Broadcast</th><th>Disponibles</th></tr>
+                        ${network.subnets.map(subnet => `<tr>
+                            <td>${escapeVlsm(subnet.name)}</td>
+                            <td>${subnet.hostsRequested}</td>
+                            <td>${subnet.cidr}</td>
+                            <td>${subnet.network}</td>
+                            <td>${subnet.firstHost}</td>
+                            <td>${subnet.lastHost}</td>
+                            <td>${subnet.broadcast}</td>
+                            <td>${subnet.usableHosts}</td>
+                        </tr>`).join("")}
+                    </table>
+                </div>
+            </div>`).join("");
+    } catch (error) {
+        message.className = "notice bad";
+        message.textContent = "Error VLSM: " + error.message;
+        results.innerHTML = "";
+    }
+}
+
+renderVlsmNetworks();
+calculateVlsmDashboard();
 
 // [DEV-001] Motor de cálculo
 function calculate(){const f=+floors.value,u=+units.value,us=+users.value,d=+devices.value,m=+mbps.value,c=+conc.value,r=+reserve.value,p=+ports.value;const U=f*u*us,D=U*d,C=Math.ceil(U*c/100),BW=Math.ceil(C*m*(1+r/100)),P=Math.ceil(D*(1+r/100)),PS=Math.ceil(P/f);metrics.innerHTML=[["Usuarios",U],["Dispositivos",D],["Concurrentes",C],["Capacidad estimada",BW+" Mbps"],["Puertos con reserva",P],["Puertos por piso",PS]].map(x=>`<div class="metric"><span>${x[0]}</span><b>${x[1]}</b></div>`).join("");design.innerHTML=`<p><b>Arquitectura:</b> Core → Distribución → Acceso por piso.</p><p><b>Usuarios:</b> ${U} · <b>Dispositivos:</b> ${D}.</p><p><b>Capacidad agregada estimada:</b> ${BW} Mbps.</p><p><b>Puertos calculados:</b> ${P} con reserva, aproximadamente ${PS} por piso.</p><p><b>Uplink seleccionado:</b> ${uplink.value}.</p>`;vlanTable.innerHTML="<table><tr><th>VLAN</th><th>Nombre</th><th>IPv4</th><th>IPv6</th></tr>"+VLAN.map(x=>`<tr><td>${x[0]}</td><td>${x[1]}</td><td>${x[2]}</td><td>${x[3]}</td></tr>`).join("")+"</table>";updateWan();verifyCommands()}

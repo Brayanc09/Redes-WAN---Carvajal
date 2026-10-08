@@ -1,12 +1,6 @@
-# Pruebas
+# Pruebas A.4 - VLSM
 
-Aquí se colocarán las pruebas de cada módulo.
+- `vlsm_test.html`: abrir con doble clic para ejecutar las pruebas en el navegador.
+- `vlsm.test.js`: pruebas equivalentes para Node.js.
 
-Para cada módulo calcularemos:
-
-**Confianza (%) = pruebas correctas / pruebas totales × 100**
-
-Ejemplo:
-8 pruebas correctas de 10 = 80% de confianza.
-
-El primer conjunto de pruebas funcionales se agregará con el módulo de subnetting.
+Resultado validado en desarrollo: 10/10 pruebas, 100% de confianza.
