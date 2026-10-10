@@ -1,0 +1,2366 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+
+  <!--
+    GESTOR DE REDES WAN
+    Primera etapa:
+    A. Subnetting / VLSM
+
+    Los módulos de Topología, Configuración y Ciberdefensa
+    se agregarán posteriormente.
+  -->
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestor de Redes WAN - Diseño y configuración</title>
+
+  <style>
+    /* ================================
+       ESTILOS GENERALES
+       ================================ */
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f4f6f9;
+      color: #1f2937;
+    }
+
+    header {
+      background: #172554;
+      color: white;
+      padding: 25px;
+    }
+
+    header h1 {
+      margin: 0 0 8px 0;
+    }
+
+    header p {
+      margin: 0;
+      opacity: 0.9;
+    }
+
+    main {
+      max-width: 1200px;
+      margin: 25px auto;
+      padding: 0 15px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    /* ================================
+       NAVEGACIÓN
+       ================================ */
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+
+    .tab {
+      border: 1px solid #cbd5e1;
+      background: white;
+      padding: 10px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .tab.active {
+      background: #172554;
+      color: white;
+    }
+
+    /* ================================
+       FORMULARIOS
+       ================================ */
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 15px;
+    }
+
+    label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 6px;
+    }
+
+    input,
+    select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+    }
+
+    button {
+      border: none;
+      border-radius: 6px;
+      padding: 10px 16px;
+      cursor: pointer;
+      background: #e2e8f0;
+      color: #1e293b;
+      font-weight: bold;
+    }
+
+    button.primary {
+      background: #172554;
+      color: white;
+    }
+
+    button.danger {
+      background: #dc2626;
+      color: white;
+    }
+
+    button:hover {
+      opacity: 0.9;
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 20px;
+    }
+
+    /* ================================
+       SEGMENTOS
+       ================================ */
+
+    .segment {
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 15px;
+      background: #f8fafc;
+    }
+
+    .segment-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    /* ================================
+       MENSAJES
+       ================================ */
+
+    .message {
+      padding: 12px;
+      border-radius: 6px;
+      margin-top: 15px;
+    }
+
+    .success {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .error {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .info {
+      background: #dbeafe;
+      color: #1e40af;
+    }
+
+    /* ================================
+       TABLA DE RESULTADOS
+       ================================ */
+
+    .table-container {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+    }
+
+    th,
+    td {
+      border: 1px solid #cbd5e1;
+      padding: 9px;
+      text-align: left;
+    }
+
+    th {
+      background: #e2e8f0;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .small {
+      font-size: 13px;
+      color: #64748b;
+    }
+  </style>
+</head>
+
+<body>
+
+<header>
+  <h1>Gestor de Redes WAN</h1>
+  <p>Herramienta de diseño y gestión de redes WAN</p>
+</header>
+
+<main>
+
+  <!-- =========================================
+       NAVEGACIÓN PRINCIPAL
+       ========================================= -->
+
+  <div class="tabs">
+
+    <button
+      class="tab active"
+      onclick="showSection('datos', this)">
+      1. Datos
+    </button>
+
+    <button
+      class="tab"
+      onclick="showSection('subnetting', this)">
+      2. Subnetting
+    </button>
+
+    <button
+      class="tab"
+      onclick="showSection('topologia', this)">
+      3. Topología
+    </button>
+
+    <button
+      class="tab"
+      onclick="showSection('configuracion', this)">
+      4. Configuración
+    </button>
+
+    <button
+      class="tab"
+      onclick="showSection('ciberdefensa', this)">
+      5. Ciberdefensa
+    </button>
+
+  </div>
+
+
+  <!-- =========================================
+       1. DATOS
+       ========================================= -->
+
+  <!-- =========================================
+     1. REQUERIMIENTOS DEL PROYECTO
+     ========================================= -->
+
+<section id="datos" class="card">
+
+  <h2>Requerimientos para el diseño de red</h2>
+
+  <p>
+    Define las necesidades de la red. Esta información será
+    utilizada posteriormente para calcular el direccionamiento,
+    diseñar la topología y generar las configuraciones.
+  </p>
+
+
+  <!-- ================================
+       INFRAESTRUCTURA
+       ================================ -->
+
+  <h3>🏢 Infraestructura</h3>
+
+  <div class="grid">
+
+    <div>
+      <label>Nombre del proyecto</label>
+
+      <input
+        id="projectName"
+        type="text"
+        placeholder="Ejemplo: Red Edificio Bogotá">
+    </div>
+
+
+    <div>
+      <label>Número de sedes</label>
+
+      <input
+        id="sites"
+        type="number"
+        min="1"
+        value="1">
+    </div>
+
+
+    <div>
+      <label>Pisos por sede</label>
+
+      <input
+        id="floors"
+        type="number"
+        min="1"
+        value="1">
+    </div>
+
+
+    <div>
+      <label>Áreas / unidades por piso</label>
+
+      <input
+        id="unitsPerFloor"
+        type="number"
+        min="1"
+        value="1">
+    </div>
+
+
+    <div>
+      <label>Usuarios por área</label>
+
+      <input
+        id="usersPerUnit"
+        type="number"
+        min="1"
+        value="1">
+    </div>
+
+  </div>
+
+
+  <!-- ================================
+       DISPOSITIVOS
+       ================================ -->
+
+  <h3>💻 Dispositivos</h3>
+
+  <div class="grid">
+
+    <div>
+      <label>Dispositivos por usuario</label>
+
+      <input
+        id="devicesPerUser"
+        type="number"
+        min="1"
+        value="1">
+    </div>
+
+
+    <div>
+      <label>Cámaras por área</label>
+
+      <input
+        id="camerasPerUnit"
+        type="number"
+        min="0"
+        value="0">
+    </div>
+
+
+    <div>
+      <label>Teléfonos IP por usuario</label>
+
+      <input
+        id="phonesPerUser"
+        type="number"
+        min="0"
+        value="0">
+    </div>
+
+
+    <div>
+      <label>Servidores</label>
+
+      <input
+        id="servers"
+        type="number"
+        min="0"
+        value="0">
+    </div>
+
+  </div>
+
+
+  <!-- ================================
+       CAPACIDAD
+       ================================ -->
+
+  <h3>🌐 Capacidad de red</h3>
+
+  <div class="grid">
+
+    <div>
+      <label>Mbps por usuario</label>
+
+      <input
+        id="mbpsPerUser"
+        type="number"
+        min="1"
+        value="10">
+    </div>
+
+
+    <div>
+      <label>Concurrencia (%)</label>
+
+      <input
+        id="concurrency"
+        type="number"
+        min="1"
+        max="100"
+        value="80">
+    </div>
+
+
+    <div>
+      <label>Reserva de capacidad (%)</label>
+
+      <input
+        id="reserve"
+        type="number"
+        min="0"
+        max="100"
+        value="20">
+    </div>
+
+
+    <div>
+      <label>Uplink mínimo (Mbps)</label>
+
+      <input
+        id="uplink"
+        type="number"
+        min="1"
+        value="1000">
+    </div>
+
+  </div>
+
+
+  <!-- ================================
+       DIRECCIONAMIENTO
+       ================================ -->
+
+  <h3>🌎 Direccionamiento</h3>
+
+  <div class="grid">
+
+    <div>
+      <label>Red IPv4 principal</label>
+
+      <input
+        id="ipv4Main"
+        type="text"
+        placeholder="Ejemplo: 10.0.0.0/8">
+    </div>
+
+
+    <div>
+      <label>Red IPv6 principal</label>
+
+      <input
+        id="ipv6Main"
+        type="text"
+        placeholder="Ejemplo: 2001:db8::/48">
+    </div>
+
+  </div>
+
+
+  <!-- ================================
+       RESULTADOS DE LOS REQUERIMIENTOS
+       ================================ -->
+
+  <div class="actions">
+
+    <button
+      class="primary"
+      onclick="calculateRequirements()">
+      Calcular requerimientos
+    </button>
+
+  </div>
+
+
+  <div id="requirementsMessage"></div>
+
+  <div id="requirementsResults"></div>
+
+</section>
+
+  <!-- =========================================
+       2. SUBNETTING / VLSM
+       ========================================= -->
+
+  <section id="subnetting" class="card hidden">
+
+    <h2>Subnetting — VLSM</h2>
+
+    <p>
+      En esta sección se diseñan las redes IP.
+      Se pueden utilizar varias redes principales y
+      distribuir los segmentos mediante VLSM.
+    </p>
+
+    <div id="mainNetworks"></div>
+
+    <div class="actions">
+
+      <button
+        class="primary"
+        onclick="addMainNetwork()">
+        + Agregar red principal
+      </button>
+
+      <button
+        class="primary"
+        onclick="calculateVLSM()">
+        Calcular VLSM
+      </button>
+
+<button
+  onclick="generateSegmentsFromRequirements()">
+  Generar segmentos desde requerimientos
+</button>
+
+    </div>
+
+    <div id="vlsmMessage"></div>
+
+    <div id="vlsmResults"></div>
+
+  </section>
+
+
+  <!-- =========================================
+       3. TOPOLOGÍA
+       ========================================= -->
+
+  <section id="topologia" class="card hidden">
+
+  <h2>Topología lógica de la red</h2>
+
+  <p>
+    Representación lógica de la infraestructura de red,
+    incluyendo seguridad perimetral, enrutamiento,
+    distribución y segmentos calculados mediante VLSM.
+  </p>
+
+  <div id="topologyMessage"></div>
+
+  <!-- ============================= -->
+  <!-- TOPOLOGÍA PRINCIPAL -->
+  <!-- ============================= -->
+
+  <div id="topologyResults">
+
+    <!-- INTERNET -->
+    <div class="topology-node">
+      <h3>🌐 Internet / WAN</h3>
+      <p>
+        Conexión externa hacia Internet y otras redes WAN.
+      </p>
+    </div>
+
+    <div class="topology-arrow">
+      ↓
+    </div>
+
+    <!-- FIREWALL -->
+    <div class="topology-node">
+      <h3>🛡️ Firewall</h3>
+      <p>
+        Protección perimetral de la red.
+      </p>
+
+      <ul>
+        <li>Filtrado de tráfico</li>
+        <li>Control de acceso</li>
+        <li>Políticas de seguridad</li>
+        <li>Protección de la red interna</li>
+      </ul>
+    </div>
+
+    <div class="topology-arrow">
+      ↓
+    </div>
+
+    <!-- ROUTER -->
+    <div class="topology-node">
+      <h3>🔀 Router / Gateway</h3>
+      <p>
+        Enrutamiento entre redes y comunicación
+        con Internet/WAN.
+      </p>
+    </div>
+
+    <div class="topology-arrow">
+      ↓
+    </div>
+
+    <!-- CORE SWITCH -->
+    <div class="topology-node">
+      <h3>🔀 Core Switch</h3>
+      <p>
+        Equipo principal de distribución de la red
+        y administración de las VLAN.
+      </p>
+    </div>
+
+    <div class="topology-arrow">
+      ↓
+    </div>
+
+    <!-- SEGMENTOS VLSM -->
+    <div class="topology-container">
+
+      <h3>Segmentos de red / VLAN</h3>
+
+      <p>
+        Los siguientes segmentos serán generados
+        automáticamente a partir del cálculo VLSM.
+      </p>
+
+      <div id="topologySegments" class="topology-segments">
+
+        <div class="message info">
+          Calcula el VLSM para generar automáticamente
+          los segmentos de la topología.
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</section>
+
+  <!-- =========================================
+       4. CONFIGURACIÓN
+       ========================================= -->
+
+  
+<section id="configuracion" class="card hidden">
+
+  <h2>Generación de configuraciones de red</h2>
+
+  <p>
+    Genera una plantilla de configuración según el fabricante,
+    utilizando las redes y VLAN calculadas en VLSM.
+  </p>
+
+  <div class="form-group">
+    <label for="configVendor">Fabricante</label>
+    <select id="configVendor">
+      <option value="cisco">Cisco IOS</option>
+      <option value="huawei">Huawei VRP</option>
+    </select>
+  </div>
+
+  <div class="form-group">
+    <label for="configHostname">Nombre del equipo</label>
+    <input
+      id="configHostname"
+      type="text"
+      value="SW-CORE"
+      maxlength="32"
+      placeholder="Ej. SW-CORE"
+    >
+  </div>
+
+  <div class="form-group">
+    <label for="configManagementIp">IP de administración (opcional)</label>
+    <input
+      id="configManagementIp"
+      type="text"
+      placeholder="Ej. 192.168.10.2"
+    >
+  </div>
+
+  
+<div class="form-group">
+  <label for="configAccessInterface">Puerto de acceso</label>
+  <input
+    id="configAccessInterface"
+    type="text"
+    value="GigabitEthernet1/0/1"
+    placeholder="Interfaz física"
+  >
+</div>
+
+<div class="form-group">
+  <label for="configAccessVlan">VLAN del puerto de acceso</label>
+  <select id="configAccessVlan">
+    <option value="20">VLAN 20 - Usuarios</option>
+    <option value="30">VLAN 30 - Voz</option>
+    <option value="40">VLAN 40 - CCTV</option>
+    <option value="60">VLAN 60 - Servidores</option>
+  </select>
+</div>
+
+<div class="form-group">
+  <label for="configTrunkInterface">Puerto troncal (opcional)</label>
+  <input
+    id="configTrunkInterface"
+    type="text"
+    value="GigabitEthernet1/0/24"
+    placeholder="Interfaz del enlace troncal"
+  >
+</div>
+
+
+  <button type="button" onclick="generateConfiguration()">
+    Generar configuración
+  </button>
+
+  <button type="button" onclick="copyConfiguration()">
+    Copiar configuración
+  </button>
+
+  <button type="button" onclick="downloadConfiguration()">
+  Descargar configuración (.txt)
+</button>
+
+  <div id="configMessage" class="message info">
+    Calcula VLSM antes de generar la configuración.
+  </div>
+
+  <h3>Comandos generados</h3>
+
+  <textarea
+    id="configOutput"
+    rows="22"
+    readonly
+    spellcheck="false"
+    placeholder="La configuración aparecerá aquí."
+  ></textarea>
+
+  <p>
+    <strong>Importante:</strong>
+    revisa la compatibilidad con el modelo y la versión del equipo
+    antes de aplicar los comandos. Esta herramienta genera una
+    plantilla; no configura dispositivos automáticamente.
+  </p>
+
+</section>
+
+
+
+  <!-- =========================================
+       5. CIBERDEFENSA
+       ========================================= -->
+
+  <section id="ciberdefensa" class="card hidden">
+
+    <h2>Ciberdefensa</h2>
+
+    <p>
+      Este módulo verificará que la configuración generada
+      no contenga prácticas inseguras.
+    </p>
+
+    <ul>
+      <li>No guardar contraseñas ni secretos.</li>
+      <li>Validar las entradas del usuario.</li>
+      <li>Detectar configuraciones inseguras.</li>
+      <li>Aplicar principio de mínimo privilegio.</li>
+      <li>Reducir la superficie de ataque.</li>
+    </ul>
+
+    <div class="message info">
+      Este módulo se implementará después de Configuración.
+    </div>
+
+  </section>
+
+</main>
+
+
+<!-- =========================================
+     MOTOR VLSM
+     ========================================= -->
+
+<script src="js/subnetting.js"></script>
+
+
+<script>
+
+  /*
+    ============================================
+    ESTADO DE LA APLICACIÓN
+    ============================================
+  */
+
+  let mainNetworks = [];
+
+
+  /*
+    ============================================
+    CAMBIO DE SECCIÓN
+    ============================================
+  */
+
+  function showSection(sectionId, button) {
+
+    const sections = [
+      "datos",
+      "subnetting",
+      "topologia",
+      "configuracion",
+      "ciberdefensa"
+    ];
+
+    sections.forEach(id => {
+
+      document
+        .getElementById(id)
+        .classList.add("hidden");
+
+    });
+
+    document
+      .getElementById(sectionId)
+      .classList.remove("hidden");
+
+
+    document
+      .querySelectorAll(".tab")
+      .forEach(tab => tab.classList.remove("active"));
+
+    button.classList.add("active");
+  }
+
+
+  /*
+    ============================================
+    AGREGAR RED PRINCIPAL
+    ============================================
+  */
+
+  function addMainNetwork() {
+
+    const id = Date.now();
+
+    mainNetworks.push({
+      id: id,
+      name: "",
+      network: "",
+      segments: []
+    });
+
+    renderMainNetworks();
+  }
+
+
+  /*
+    ============================================
+    MOSTRAR REDES PRINCIPALES
+    ============================================
+  */
+
+  function renderMainNetworks() {
+
+    const container =
+      document.getElementById("mainNetworks");
+
+    container.innerHTML = "";
+
+
+    if (mainNetworks.length === 0) {
+
+      container.innerHTML = `
+        <div class="message info">
+          No hay redes principales.
+          Presiona "Agregar red principal".
+        </div>
+      `;
+
+      return;
+    }
+
+
+    mainNetworks.forEach((network, networkIndex) => {
+
+      const div =
+        document.createElement("div");
+
+      div.className = "segment";
+
+      div.innerHTML = `
+
+        <div class="segment-header">
+
+          <h3>
+            Red principal ${networkIndex + 1}
+          </h3>
+
+          <button
+            class="danger"
+            onclick="removeMainNetwork(${network.id})">
+            Eliminar
+          </button>
+
+        </div>
+
+        <div class="grid">
+
+          <div>
+
+            <label>
+              Nombre de la red
+            </label>
+
+            <input
+              value="${network.name}"
+              placeholder="Ejemplo: Sede Bogotá"
+              onchange="updateNetwork(
+                ${network.id},
+                'name',
+                this.value
+              )">
+
+          </div>
+
+
+          <div>
+
+            <label>
+              Red IPv4 principal
+            </label>
+
+            <input
+              value="${network.network}"
+              placeholder="Ejemplo: 10.10.0.0/16"
+              onchange="updateNetwork(
+                ${network.id},
+                'network',
+                this.value
+              )">
+
+            <div class="small">
+              Utiliza redes de documentación.
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <h4>Segmentos</h4>
+
+        <div id="segments-${network.id}">
+        </div>
+
+
+        <button
+          onclick="addSegment(${network.id})">
+          + Agregar segmento
+        </button>
+
+      `;
+
+
+      container.appendChild(div);
+
+      renderSegments(network);
+
+    });
+  }
+
+
+  /*
+    ============================================
+    ACTUALIZAR RED PRINCIPAL
+    ============================================
+  */
+
+  function updateNetwork(id, field, value) {
+
+    const network =
+      mainNetworks.find(n => n.id === id);
+
+    if (!network) return;
+
+    network[field] = value;
+  }
+
+
+  /*
+    ============================================
+    ELIMINAR RED PRINCIPAL
+    ============================================
+  */
+
+  function removeMainNetwork(id) {
+
+    mainNetworks =
+      mainNetworks.filter(n => n.id !== id);
+
+    renderMainNetworks();
+  }
+
+
+  /*
+    ============================================
+    AGREGAR SEGMENTO
+    ============================================
+  */
+
+  function addSegment(networkId) {
+
+    const network =
+      mainNetworks.find(n => n.id === networkId);
+
+    if (!network) return;
+
+
+    network.segments.push({
+
+      name: "",
+      hosts: 1,
+      type: "LAN",
+      vlan: ""
+
+    });
+
+
+    renderMainNetworks();
+  }
+
+
+  /*
+    ============================================
+    MOSTRAR SEGMENTOS
+    ============================================
+  */
+
+  function renderSegments(network) {
+
+    const container =
+      document.getElementById(
+        `segments-${network.id}`
+      );
+
+    if (!container) return;
+
+
+    container.innerHTML = "";
+
+
+    network.segments.forEach(
+      (segment, index) => {
+
+        const div =
+          document.createElement("div");
+
+        div.className = "segment";
+
+        div.innerHTML = `
+
+          <div class="grid">
+
+            <div>
+
+              <label>
+                Nombre del segmento
+              </label>
+
+              <input
+                value="${segment.name}"
+                placeholder="Ejemplo: Usuarios"
+                onchange="
+                  updateSegment(
+                    ${network.id},
+                    ${index},
+                    'name',
+                    this.value
+                  )
+                ">
+
+            </div>
+
+
+            <div>
+
+              <label>
+                VLAN
+              </label>
+
+              <input
+                type="number"
+                min="1"
+                max="4094"
+                value="${segment.vlan}"
+                placeholder="Ejemplo: 20"
+                onchange="
+                  updateSegment(
+                    ${network.id},
+                    ${index},
+                    'vlan',
+                    this.value
+                  )
+                ">
+
+            </div>
+
+
+            <div>
+
+              <label>
+                Hosts requeridos
+              </label>
+
+              <input
+                type="number"
+                min="1"
+                value="${segment.hosts}"
+                onchange="
+                  updateSegment(
+                    ${network.id},
+                    ${index},
+                    'hosts',
+                    this.value
+                  )
+                ">
+
+            </div>
+
+
+            <div>
+
+              <label>
+                Tipo
+              </label>
+
+              <select
+                onchange="
+                  updateSegment(
+                    ${network.id},
+                    ${index},
+                    'type',
+                    this.value
+                  )
+                ">
+
+                <option
+                  value="LAN"
+                  ${segment.type === "LAN" ? "selected" : ""}>
+                  LAN
+                </option>
+
+                <option
+                  value="P2P"
+                  ${segment.type === "P2P" ? "selected" : ""}>
+                  P2P
+                </option>
+
+                <option
+                  value="LOOPBACK"
+                  ${segment.type === "LOOPBACK" ? "selected" : ""}>
+                  LOOPBACK
+                </option>
+
+              </select>
+
+            </div>
+
+          </div>
+
+          <div class="actions">
+
+            <button
+              class="danger"
+              onclick="
+                removeSegment(
+                  ${network.id},
+                  ${index}
+                )
+              ">
+              Eliminar segmento
+            </button>
+
+          </div>
+        `;
+
+        container.appendChild(div);
+
+      }
+    );
+  }
+
+
+  /*
+    ============================================
+    ACTUALIZAR SEGMENTO
+    ============================================
+  */
+
+  function updateSegment(
+    networkId,
+    segmentIndex,
+    field,
+    value
+  ) {
+
+    const network =
+      mainNetworks.find(
+        n => n.id === networkId
+      );
+
+    if (!network) return;
+
+
+    network.segments[segmentIndex][field] =
+      field === "hosts"
+        ? Number(value)
+        : value;
+
+
+    if (field === "hosts") {
+
+      if (
+        !Number.isInteger(
+          network.segments[segmentIndex][field]
+        ) ||
+        network.segments[segmentIndex][field] < 1
+      ) {
+
+        network.segments[segmentIndex][field] = 1;
+
+      }
+
+    }
+  }
+
+
+  /*
+    ============================================
+    ELIMINAR SEGMENTO
+    ============================================
+  */
+
+  function removeSegment(
+    networkId,
+    segmentIndex
+  ) {
+
+    const network =
+      mainNetworks.find(
+        n => n.id === networkId
+      );
+
+    if (!network) return;
+
+
+    network.segments.splice(
+      segmentIndex,
+      1
+    );
+
+    renderMainNetworks();
+  }
+
+/*
+  ============================================
+  CALCULAR REQUERIMIENTOS DE LA RED
+  ============================================
+
+  Esta función toma los datos ingresados por el
+  usuario y calcula las necesidades generales
+  de la infraestructura.
+
+  Ejemplo:
+
+  sedes × pisos × áreas × usuarios
+  = usuarios totales
+
+  usuarios totales × dispositivos
+  = dispositivos de usuarios
+*/
+
+function calculateRequirements() {
+
+  const message =
+    document.getElementById("requirementsMessage");
+
+  const results =
+    document.getElementById("requirementsResults");
+
+
+  /*
+    --------------------------------------------
+    1. OBTENER DATOS DEL FORMULARIO
+    --------------------------------------------
+  */
+
+  const projectName =
+    document.getElementById("projectName").value.trim();
+
+  const sites =
+    Number(document.getElementById("sites").value);
+
+  const floors =
+    Number(document.getElementById("floors").value);
+
+  const unitsPerFloor =
+    Number(document.getElementById("unitsPerFloor").value);
+
+  const usersPerUnit =
+    Number(document.getElementById("usersPerUnit").value);
+
+  const devicesPerUser =
+    Number(document.getElementById("devicesPerUser").value);
+
+  const camerasPerUnit =
+    Number(document.getElementById("camerasPerUnit").value);
+
+  const phonesPerUser =
+    Number(document.getElementById("phonesPerUser").value);
+
+  const servers =
+    Number(document.getElementById("servers").value);
+
+  const mbpsPerUser =
+    Number(document.getElementById("mbpsPerUser").value);
+
+  const concurrency =
+    Number(document.getElementById("concurrency").value);
+
+  const reserve =
+    Number(document.getElementById("reserve").value);
+
+  const uplink =
+    Number(document.getElementById("uplink").value);
+
+
+  /*
+    --------------------------------------------
+    2. VALIDAR INFORMACIÓN
+    --------------------------------------------
+  */
+
+  if (!projectName) {
+
+    showRequirementError(
+      "Debe ingresar el nombre del proyecto."
+    );
+
+    return;
+  }
+
+
+  const numericValues = [
+    sites,
+    floors,
+    unitsPerFloor,
+    usersPerUnit,
+    devicesPerUser,
+    camerasPerUnit,
+    phonesPerUser,
+    servers,
+    mbpsPerUser,
+    concurrency,
+    reserve,
+    uplink
+  ];
+
+
+  if (
+    numericValues.some(
+      value => !Number.isFinite(value) || value < 0
+    )
+  ) {
+
+    showRequirementError(
+      "Los valores numéricos deben ser válidos y no negativos."
+    );
+
+    return;
+  }
+
+
+  if (
+    sites < 1 ||
+    floors < 1 ||
+    unitsPerFloor < 1 ||
+    usersPerUnit < 1 ||
+    devicesPerUser < 1 ||
+    mbpsPerUser < 1 ||
+    uplink < 1
+  ) {
+
+    showRequirementError(
+      "Sedes, pisos, áreas, usuarios, dispositivos, Mbps y uplink deben ser mayores que cero."
+    );
+
+    return;
+  }
+
+
+  if (concurrency > 100 || reserve > 100) {
+
+    showRequirementError(
+      "La concurrencia y la reserva no pueden superar el 100%."
+    );
+
+    return;
+  }
+
+
+  /*
+    --------------------------------------------
+    3. CALCULAR INFRAESTRUCTURA
+    --------------------------------------------
+  */
+
+  const totalUnits =
+    sites *
+    floors *
+    unitsPerFloor;
+
+
+  const totalUsers =
+    totalUnits *
+    usersPerUnit;
+
+
+  /*
+    --------------------------------------------
+    4. CALCULAR DISPOSITIVOS
+    --------------------------------------------
+  */
+
+  const userDevices =
+    totalUsers *
+    devicesPerUser;
+
+
+  const totalCameras =
+    totalUnits *
+    camerasPerUnit;
+
+
+  const totalPhones =
+    totalUsers *
+    phonesPerUser;
+
+
+  const totalDevices =
+    userDevices +
+    totalCameras +
+    totalPhones +
+    servers;
+
+
+  /*
+    --------------------------------------------
+    5. CALCULAR ANCHO DE BANDA
+    --------------------------------------------
+  */
+
+  const bandwidthBase =
+    totalUsers *
+    mbpsPerUser;
+
+
+  const bandwidthConcurrent =
+    bandwidthBase *
+    (concurrency / 100);
+
+
+  const bandwidthWithReserve =
+    bandwidthConcurrent *
+    (1 + reserve / 100);
+
+
+  /*
+    --------------------------------------------
+    6. VERIFICAR UPLINK
+    --------------------------------------------
+  */
+
+  const uplinkStatus =
+    uplink >= bandwidthWithReserve
+      ? "Adecuado"
+      : "Insuficiente";
+
+
+  /*
+    --------------------------------------------
+    7. MOSTRAR RESULTADOS
+    --------------------------------------------
+  */
+
+  message.className =
+    "message success";
+
+  message.textContent =
+    "Los requerimientos fueron calculados correctamente.";
+
+
+  results.innerHTML = `
+
+    <div class="card">
+
+      <h3>Resumen del proyecto</h3>
+
+      <p>
+        <strong>Proyecto:</strong>
+        ${projectName}
+      </p>
+
+
+      <h3>Infraestructura</h3>
+
+      <div class="grid">
+
+        <div>
+          <strong>Sedes</strong>
+          <p>${sites}</p>
+        </div>
+
+        <div>
+          <strong>Áreas totales</strong>
+          <p>${totalUnits}</p>
+        </div>
+
+        <div>
+          <strong>Usuarios totales</strong>
+          <p>${totalUsers}</p>
+        </div>
+
+      </div>
+
+
+      <h3>Dispositivos</h3>
+
+      <div class="grid">
+
+        <div>
+          <strong>Dispositivos de usuarios</strong>
+          <p>${userDevices}</p>
+        </div>
+
+        <div>
+          <strong>Cámaras</strong>
+          <p>${totalCameras}</p>
+        </div>
+
+        <div>
+          <strong>Teléfonos IP</strong>
+          <p>${totalPhones}</p>
+        </div>
+
+        <div>
+          <strong>Servidores</strong>
+          <p>${servers}</p>
+        </div>
+
+        <div>
+          <strong>Total de dispositivos</strong>
+          <p>${totalDevices}</p>
+        </div>
+
+      </div>
+
+
+      <h3>Capacidad de red</h3>
+
+      <div class="grid">
+
+        <div>
+          <strong>Demanda base</strong>
+          <p>${bandwidthBase.toFixed(2)} Mbps</p>
+        </div>
+
+        <div>
+          <strong>Concurrencia</strong>
+          <p>${bandwidthConcurrent.toFixed(2)} Mbps</p>
+        </div>
+
+        <div>
+          <strong>Con reserva</strong>
+          <p>${bandwidthWithReserve.toFixed(2)} Mbps</p>
+        </div>
+
+        <div>
+          <strong>Uplink configurado</strong>
+          <p>${uplink} Mbps</p>
+        </div>
+
+        <div>
+          <strong>Estado del uplink</strong>
+          <p>${uplinkStatus}</p>
+        </div>
+
+      </div>
+
+    </div>
+
+  `;
+}
+
+
+/*
+  ============================================
+  MOSTRAR ERROR DE REQUERIMIENTOS
+  ============================================
+*/
+
+function showRequirementError(messageText) {
+
+  const message =
+    document.getElementById("requirementsMessage");
+
+  const results =
+    document.getElementById("requirementsResults");
+
+
+  message.className =
+    "message error";
+
+  message.textContent =
+    messageText;
+
+  results.innerHTML = "";
+}
+
+function generateSegmentsFromRequirements() {
+
+  const ipv4Main =
+    document.getElementById("ipv4Main").value.trim();
+
+  const sites =
+    Number(document.getElementById("sites").value);
+
+  const floors =
+    Number(document.getElementById("floors").value);
+
+  const unitsPerFloor =
+    Number(document.getElementById("unitsPerFloor").value);
+
+  const usersPerUnit =
+    Number(document.getElementById("usersPerUnit").value);
+
+  const devicesPerUser =
+    Number(document.getElementById("devicesPerUser").value);
+
+  const camerasPerUnit =
+    Number(document.getElementById("camerasPerUnit").value);
+
+  const phonesPerUser =
+    Number(document.getElementById("phonesPerUser").value);
+
+  const servers =
+    Number(document.getElementById("servers").value);
+
+
+  if (!ipv4Main) {
+    alert("Debes ingresar una red IPv4 principal.");
+    return;
+  }
+
+
+  const totalUnits =
+    sites * floors * unitsPerFloor;
+
+  const totalUsers =
+    totalUnits * usersPerUnit;
+
+  const userDevices =
+    totalUsers * devicesPerUser;
+
+  const totalCameras =
+    totalUnits * camerasPerUnit;
+
+  const totalPhones =
+    totalUsers * phonesPerUser;
+
+
+  const segments = [];
+
+
+  if (userDevices > 0) {
+    segments.push({
+      name: "USUARIOS",
+      hosts: userDevices,
+      type: "LAN",
+      vlan: 20
+    });
+  }
+
+
+  if (totalCameras > 0) {
+    segments.push({
+      name: "CCTV",
+      hosts: totalCameras,
+      type: "LAN",
+      vlan: 40
+    });
+  }
+
+
+  if (totalPhones > 0) {
+    segments.push({
+      name: "VOZ",
+      hosts: totalPhones,
+      type: "LAN",
+      vlan: 30
+    });
+  }
+
+
+  if (servers > 0) {
+    segments.push({
+      name: "SERVIDORES",
+      hosts: servers,
+      type: "LAN",
+      vlan: 60
+    });
+  }
+
+
+  mainNetworks = [{
+    id: Date.now(),
+    name:
+      document.getElementById("projectName").value.trim()
+      || "Red principal",
+    network: ipv4Main,
+    segments: segments
+  }];
+
+
+  renderMainNetworks();
+
+
+  const subnettingButton =
+    document.querySelectorAll(".tab")[1];
+
+  showSection(
+    "subnetting",
+    subnettingButton
+  );
+
+
+  const message =
+    document.getElementById("vlsmMessage");
+
+  message.className =
+    "message success";
+
+  message.textContent =
+    "Segmentos generados correctamente desde los requerimientos.";
+}
+  /*
+    ============================================
+    CALCULAR VLSM
+    ============================================
+  */
+
+  function calculateVLSM() {
+
+    const message =
+      document.getElementById("vlsmMessage");
+
+    const results =
+      document.getElementById("vlsmResults");
+
+
+    message.innerHTML = "";
+    results.innerHTML = "";
+
+
+    try {
+
+      /*
+        Validaciones básicas antes de utilizar
+        el motor VLSM.
+      */
+
+      if (mainNetworks.length === 0) {
+
+        throw new Error(
+          "Debe agregar al menos una red principal."
+        );
+
+      }
+
+
+      for (const network of mainNetworks) {
+
+        if (!network.name.trim()) {
+
+          throw new Error(
+            "Todas las redes deben tener un nombre."
+          );
+
+        }
+
+
+        if (!network.network.trim()) {
+
+          throw new Error(
+            `La red "${network.name}" no tiene una red IPv4.`
+          );
+
+        }
+
+
+        if (network.segments.length === 0) {
+
+          throw new Error(
+            `La red "${network.name}" debe tener al menos un segmento.`
+          );
+
+        }
+
+
+        for (const segment of network.segments) {
+
+          if (!segment.name.trim()) {
+
+            throw new Error(
+              `La red "${network.name}" tiene un segmento sin nombre.`
+            );
+
+          }
+
+
+          if (
+            !Number.isInteger(segment.hosts) ||
+            segment.hosts < 1
+          ) {
+
+            throw new Error(
+              `El segmento "${segment.name}" tiene una cantidad de hosts inválida.`
+            );
+
+          }
+
+        }
+
+      }
+
+
+      /*
+        Ejecutamos el motor VLSM existente.
+      */
+
+      const calculation =
+        NetBuildingVLSM.calculateMultipleNetworks(
+          mainNetworks
+        );
+
+
+      renderResults(calculation);
+
+renderTopology(calculation);
+
+
+message.className =
+  "message success";
+
+
+      message.textContent =
+        "VLSM calculado correctamente.";
+
+
+    } catch (error) {
+
+      message.className =
+        "message error";
+
+      message.textContent =
+        "Error: " + error.message;
+
+    }
+
+  }
+
+
+/*
+  ============================================
+  MOSTRAR TOPOLOGÍA
+  ============================================
+*/
+
+function renderTopology(calculation) {
+  const container = document.getElementById("topologySegments");
+
+  if (!container) return;
+
+  container.innerHTML = "";
+
+  if (!calculation || calculation.length === 0) {
+    container.innerHTML = `
+      <div class="message info">
+        No existen segmentos calculados mediante VLSM.
+      </div>
+    `;
+    return;
+  }
+
+  calculation.forEach(networkResult => {
+    const sourceNetwork = mainNetworks.find(
+      network => network.name === networkResult.name
+    );
+
+    const networkTitle = document.createElement("div");
+    networkTitle.className = "topology-network";
+    networkTitle.textContent = `Red principal: ${networkResult.name}`;
+    container.appendChild(networkTitle);
+
+    networkResult.subnets.forEach(subnet => {
+      const sourceSegment = sourceNetwork?.segments?.find(
+        segment => segment.name === subnet.name
+      );
+
+      const vlan = sourceSegment?.vlan ?? subnet.vlan ?? "N/A";
+      const type = sourceSegment?.type ?? subnet.type ?? "LAN";
+
+      const segment = document.createElement("div");
+      segment.className = "topology-segment";
+
+      const header = document.createElement("h4");
+      header.textContent = `${subnet.name} — VLAN ${vlan}`;
+      segment.appendChild(header);
+
+      const details = document.createElement("div");
+      details.className = "topology-segment-data";
+
+      const fields = [
+        ["Tipo", type],
+        ["Red", subnet.network],
+        ["CIDR", subnet.networkCidr],
+        ["Hosts solicitados", subnet.hostsRequested],
+        ["Hosts disponibles", subnet.usableHosts],
+        ["Primer host", subnet.firstHost],
+        ["Último host", subnet.lastHost],
+        ["Broadcast", subnet.broadcast]
+      ];
+
+      fields.forEach(([label, value]) => {
+        const paragraph = document.createElement("p");
+        const strong = document.createElement("strong");
+
+        strong.textContent = `${label}: `;
+        paragraph.appendChild(strong);
+        paragraph.appendChild(document.createTextNode(String(value ?? "N/A")));
+        details.appendChild(paragraph);
+      });
+
+      segment.appendChild(details);
+      container.appendChild(segment);
+    });
+  });
+}
+
+
+/*
+  ============================================
+  GENERADOR DE CONFIGURACIONES
+  ============================================
+*/
+
+let lastGeneratedConfiguration = "";
+
+
+function generateConfiguration() {
+  const vendor = document.getElementById("configVendor").value;
+  const hostnameInput = document.getElementById("configHostname").value.trim();
+  const accessInterface = document.getElementById("configAccessInterface").value.trim();
+  const accessVlan = Number(document.getElementById("configAccessVlan").value);
+  const trunkInterface = document.getElementById("configTrunkInterface").value.trim();
+  const message = document.getElementById("configMessage");
+  const output = document.getElementById("configOutput");
+
+  const hostname = hostnameInput || "SW-CORE";
+
+  const showError = text => {
+    message.className = "message error";
+    message.textContent = text;
+  };
+
+  if (!/^[a-zA-Z0-9_-]{1,32}$/.test(hostname)) {
+    showError("Hostname inválido. Usa letras, números, guion o guion bajo.");
+    return;
+  }
+
+  if (!mainNetworks || mainNetworks.length === 0) {
+    showError("Genera los segmentos desde Requerimientos y calcula VLSM primero.");
+    return;
+  }
+
+  const vlanMap = new Map();
+
+  mainNetworks.forEach(network => {
+    (network.segments || []).forEach(segment => {
+      const vlan = Number(segment.vlan);
+
+      if (Number.isInteger(vlan) && vlan >= 1 && vlan <= 4094) {
+        vlanMap.set(vlan, String(segment.name || `VLAN_${vlan}`));
+      }
+    });
+  });
+
+  if (vlanMap.size === 0) {
+    showError("No se encontraron VLAN válidas en los segmentos.");
+    return;
+  }
+
+  if (!vlanMap.has(accessVlan)) {
+    showError(`La VLAN ${accessVlan} no existe en los segmentos VLSM actuales.`);
+    return;
+  }
+
+  // Solo acepta nombres simples de interfaces, sin comandos adicionales.
+  const validInterface = name =>
+    /^[a-zA-Z][a-zA-Z0-9/.-]{0,63}$/.test(name);
+
+  if (!validInterface(accessInterface)) {
+    showError("Revisa el nombre de la interfaz de acceso.");
+    return;
+  }
+
+  if (trunkInterface && !validInterface(trunkInterface)) {
+    showError("Revisa el nombre de la interfaz troncal.");
+    return;
+  }
+
+  if (
+    trunkInterface &&
+    accessInterface.toLowerCase() === trunkInterface.toLowerCase()
+  ) {
+    showError("El puerto de acceso y el troncal deben ser diferentes.");
+    return;
+  }
+
+  const safeVlanName = name =>
+    name.normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-zA-Z0-9_-]/g, "_")
+      .slice(0, 32) || "SEGMENTO";
+
+  const vlans = Array.from(vlanMap.keys()).sort((a, b) => a - b);
+  const vlanList = vlans.join(",");
+  const lines = [];
+
+  if (vendor === "cisco") {
+    lines.push(
+      "! NetBuilding V3 - Cisco IOS/IOS XE",
+      "! Verifica modelo, interfaces y VLAN antes de aplicar.",
+      "enable",
+      "configure terminal",
+      `hostname ${hostname}`,
+      "!"
+    );
+
+    for (const [vlan, name] of vlanMap) {
+      lines.push(
+        `vlan ${vlan}`,
+        ` name ${safeVlanName(name)}`,
+        " exit",
+        "!"
+      );
+    }
+
+    lines.push(
+      `interface ${accessInterface}`,
+      " description NETBUILDING_PUERTO_ACCESO",
+      " switchport mode access",
+      ` switchport access vlan ${accessVlan}`,
+      " no shutdown",
+      " exit",
+      "!"
+    );
+
+    if (trunkInterface) {
+      lines.push(
+        `interface ${trunkInterface}`,
+        " description NETBUILDING_ENLACE_TRONCAL",
+        " switchport mode trunk",
+        ` switchport trunk allowed vlan ${vlanList}`,
+        " no shutdown",
+        " exit",
+        "!"
+      );
+    }
+
+    lines.push(
+      "end",
+      "!",
+      "! Verificacion",
+      "show vlan brief",
+      "show interfaces status",
+      "show interfaces trunk",
+      "show running-config",
+      "!"
+    );
+
+  } else if (vendor === "huawei") {
+    lines.push(
+      "# NetBuilding V3 - Huawei VRP",
+      "# Verifica modelo, interfaces y VLAN antes de aplicar.",
+      "system-view",
+      `sysname ${hostname}`
+    );
+
+    for (const [vlan, name] of vlanMap) {
+      lines.push(
+        `vlan ${vlan}`,
+        ` description ${safeVlanName(name)}`,
+        " quit"
+      );
+    }
+
+    lines.push(
+      `interface ${accessInterface}`,
+      " description NETBUILDING_PUERTO_ACCESO",
+      " port link-type access",
+      ` port default vlan ${accessVlan}`,
+      " undo shutdown",
+      " quit"
+    );
+
+    if (trunkInterface) {
+      lines.push(
+        `interface ${trunkInterface}`,
+        " description NETBUILDING_ENLACE_TRONCAL",
+        " port link-type trunk",
+        ` port trunk allow-pass vlan ${vlans.join(" ")}`,
+        " undo shutdown",
+        " quit"
+      );
+    }
+
+    lines.push(
+      "return",
+      "# Verificacion",
+      "display vlan",
+      "display interface brief",
+      "display current-configuration",
+      "#"
+    );
+
+  } else {
+    showError("Selecciona Cisco IOS/IOS XE o Huawei VRP.");
+    return;
+  }
+
+  const config = lines.join("\n");
+  lastGeneratedConfiguration = config;
+  output.value = config;
+
+  message.className = "message success";
+  message.textContent =
+    "Configuración generada con VLAN, puerto de acceso y troncal. Verifica la compatibilidad del equipo antes de aplicarla.";
+}
+
+function copyConfiguration() {
+  const output = document.getElementById("configOutput");
+  const message = document.getElementById("configMessage");
+
+  if (!output.value.trim()) {
+    message.className = "message error";
+    message.textContent = "Primero genera una configuración.";
+    return;
+  }
+
+  output.focus();
+  output.select();
+
+  const copied = document.execCommand("copy");
+
+  message.className = copied ? "message success" : "message info";
+  message.textContent = copied
+    ? "Configuración copiada."
+    : "Selecciona el texto y cópialo manualmente con Ctrl+C.";
+}
+
+function downloadConfiguration() {
+  const output = document.getElementById("configOutput");
+  const vendor = document.getElementById("configVendor").value;
+  const message = document.getElementById("configMessage");
+
+  if (!output.value.trim()) {
+    message.className = "message error";
+    message.textContent = "Primero genera una configuración.";
+    return;
+  }
+
+  const blob = new Blob([output.value], {
+    type: "text/plain;charset=utf-8"
+  });
+
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `netbuilding-${vendor}-config.txt`;
+  link.click();
+  URL.revokeObjectURL(url);
+
+  message.className = "message success";
+  message.textContent = "Descarga solicitada.";
+}
+
+
+  /*
+    ============================================
+    MOSTRAR RESULTADOS
+    ============================================
+  */
+
+  
+
+  function renderResults(calculation) {
+
+    const container =
+      document.getElementById(
+        "vlsmResults"
+      );
+
+    container.innerHTML = "";
+
+
+    calculation.forEach(
+      networkResult => {
+
+        const card =
+          document.createElement("div");
+
+        card.className = "card";
+
+
+        card.innerHTML = `
+
+          <h3>
+            ${networkResult.name}
+          </h3>
+
+          <div class="table-container">
+
+            <table>
+
+              <thead>
+
+                <tr>
+
+                  <th>Segmento</th>
+                  <th>Hosts solicitados</th>
+                  <th>CIDR</th>
+                  <th>Red</th>
+                  <th>Primer host</th>
+                  <th>Último host</th>
+                  <th>Broadcast</th>
+                  <th>Hosts disponibles</th>
+
+                </tr>
+
+              </thead>
+
+              <tbody>
+
+                ${
+                  networkResult.subnets
+                    .map(subnet => `
+
+                      <tr>
+
+                        <td>
+                          ${subnet.name}
+                        </td>
+
+                        <td>
+                          ${subnet.hostsRequested}
+                        </td>
+
+                        <td>
+                          ${subnet.networkCidr}
+                        </td>
+
+                        <td>
+                          ${subnet.network}
+                        </td>
+
+                        <td>
+                          ${subnet.firstHost}
+                        </td>
+
+                        <td>
+                          ${subnet.lastHost}
+                        </td>
+
+                        <td>
+                          ${subnet.broadcast}
+                        </td>
+
+                        <td>
+                          ${subnet.usableHosts}
+                        </td>
+
+                      </tr>
+
+                    `)
+                    .join("")
+                }
+
+              </tbody>
+
+            </table>
+
+          </div>
+
+        `;
+
+
+        container.appendChild(card);
+
+      }
+    );
+
+  }
+
+
+  /*
+    ============================================
+    INICIALIZACIÓN
+    ============================================
+  */
+
+  document.addEventListener(
+    "DOMContentLoaded",
+    () => {
+
+      addMainNetwork();
+
+    }
+  );
+
+</script>
+
+</body>
+</html>
