@@ -561,20 +561,103 @@
 
   <section id="topologia" class="card hidden">
 
-    <h2>Topología</h2>
+  <h2>Topología lógica de la red</h2>
 
-    <p>
-      Este módulo utilizará posteriormente las redes y
-      segmentos calculados en VLSM para construir la
-      topología lógica de la red.
-    </p>
+  <p>
+    Representación lógica de la infraestructura de red,
+    incluyendo seguridad perimetral, enrutamiento,
+    distribución y segmentos calculados mediante VLSM.
+  </p>
 
-    <div class="message info">
-      Módulo preparado para la siguiente etapa.
+  <div id="topologyMessage"></div>
+
+  <!-- ============================= -->
+  <!-- TOPOLOGÍA PRINCIPAL -->
+  <!-- ============================= -->
+
+  <div id="topologyResults">
+
+    <!-- INTERNET -->
+    <div class="topology-node">
+      <h3>🌐 Internet / WAN</h3>
+      <p>
+        Conexión externa hacia Internet y otras redes WAN.
+      </p>
     </div>
 
-  </section>
+    <div class="topology-arrow">
+      ↓
+    </div>
 
+    <!-- FIREWALL -->
+    <div class="topology-node">
+      <h3>🛡️ Firewall</h3>
+      <p>
+        Protección perimetral de la red.
+      </p>
+
+      <ul>
+        <li>Filtrado de tráfico</li>
+        <li>Control de acceso</li>
+        <li>Políticas de seguridad</li>
+        <li>Protección de la red interna</li>
+      </ul>
+    </div>
+
+    <div class="topology-arrow">
+      ↓
+    </div>
+
+    <!-- ROUTER -->
+    <div class="topology-node">
+      <h3>🔀 Router / Gateway</h3>
+      <p>
+        Enrutamiento entre redes y comunicación
+        con Internet/WAN.
+      </p>
+    </div>
+
+    <div class="topology-arrow">
+      ↓
+    </div>
+
+    <!-- CORE SWITCH -->
+    <div class="topology-node">
+      <h3>🔀 Core Switch</h3>
+      <p>
+        Equipo principal de distribución de la red
+        y administración de las VLAN.
+      </p>
+    </div>
+
+    <div class="topology-arrow">
+      ↓
+    </div>
+
+    <!-- SEGMENTOS VLSM -->
+    <div class="topology-container">
+
+      <h3>Segmentos de red / VLAN</h3>
+
+      <p>
+        Los siguientes segmentos serán generados
+        automáticamente a partir del cálculo VLSM.
+      </p>
+
+      <div id="topologySegments" class="topology-segments">
+
+        <div class="message info">
+          Calcula el VLSM para generar automáticamente
+          los segmentos de la topología.
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</section>
 
   <!-- =========================================
        4. CONFIGURACIÓN
@@ -1710,9 +1793,12 @@ function generateSegmentsFromRequirements() {
 
       renderResults(calculation);
 
+renderTopology(calculation);
 
-      message.className =
-        "message success";
+
+message.className =
+  "message success";
+
 
       message.textContent =
         "VLSM calculado correctamente.";
@@ -1731,11 +1817,91 @@ function generateSegmentsFromRequirements() {
   }
 
 
+/*
+  ============================================
+  MOSTRAR TOPOLOGÍA
+  ============================================
+*/
+
+function renderTopology(calculation) {
+  const container = document.getElementById("topologySegments");
+
+  if (!container) return;
+
+  container.innerHTML = "";
+
+  if (!calculation || calculation.length === 0) {
+    container.innerHTML = `
+      <div class="message info">
+        No existen segmentos calculados mediante VLSM.
+      </div>
+    `;
+    return;
+  }
+
+  calculation.forEach(networkResult => {
+    const sourceNetwork = mainNetworks.find(
+      network => network.name === networkResult.name
+    );
+
+    const networkTitle = document.createElement("div");
+    networkTitle.className = "topology-network";
+    networkTitle.textContent = `Red principal: ${networkResult.name}`;
+    container.appendChild(networkTitle);
+
+    networkResult.subnets.forEach(subnet => {
+      const sourceSegment = sourceNetwork?.segments?.find(
+        segment => segment.name === subnet.name
+      );
+
+      const vlan = sourceSegment?.vlan ?? subnet.vlan ?? "N/A";
+      const type = sourceSegment?.type ?? subnet.type ?? "LAN";
+
+      const segment = document.createElement("div");
+      segment.className = "topology-segment";
+
+      const header = document.createElement("h4");
+      header.textContent = `${subnet.name} — VLAN ${vlan}`;
+      segment.appendChild(header);
+
+      const details = document.createElement("div");
+      details.className = "topology-segment-data";
+
+      const fields = [
+        ["Tipo", type],
+        ["Red", subnet.network],
+        ["CIDR", subnet.networkCidr],
+        ["Hosts solicitados", subnet.hostsRequested],
+        ["Hosts disponibles", subnet.usableHosts],
+        ["Primer host", subnet.firstHost],
+        ["Último host", subnet.lastHost],
+        ["Broadcast", subnet.broadcast]
+      ];
+
+      fields.forEach(([label, value]) => {
+        const paragraph = document.createElement("p");
+        const strong = document.createElement("strong");
+
+        strong.textContent = `${label}: `;
+        paragraph.appendChild(strong);
+        paragraph.appendChild(document.createTextNode(String(value ?? "N/A")));
+        details.appendChild(paragraph);
+      });
+
+      segment.appendChild(details);
+      container.appendChild(segment);
+    });
+  });
+}
+
+
   /*
     ============================================
     MOSTRAR RESULTADOS
     ============================================
   */
+
+  
 
   function renderResults(calculation) {
 
