@@ -663,26 +663,111 @@
        4. CONFIGURACIÓN
        ========================================= -->
 
-  <section id="configuracion" class="card hidden">
+  
+<section id="configuracion" class="card hidden">
 
-    <h2>Generación de configuraciones</h2>
+  <h2>Generación de configuraciones de red</h2>
 
-    <p>
-      Aquí se generarán configuraciones para:
-    </p>
+  <p>
+    Genera una plantilla de configuración según el fabricante,
+    utilizando las redes y VLAN calculadas en VLSM.
+  </p>
 
-    <ul>
-      <li>Cisco</li>
-      <li>Huawei</li>
-      <li>Fortinet</li>
-      <li>MikroTik</li>
-    </ul>
+  <div class="form-group">
+    <label for="configVendor">Fabricante</label>
+    <select id="configVendor">
+      <option value="cisco">Cisco IOS</option>
+      <option value="huawei">Huawei VRP</option>
+    </select>
+  </div>
 
-    <div class="message info">
-      Este módulo se implementará después de Topología.
-    </div>
+  <div class="form-group">
+    <label for="configHostname">Nombre del equipo</label>
+    <input
+      id="configHostname"
+      type="text"
+      value="SW-CORE"
+      maxlength="32"
+      placeholder="Ej. SW-CORE"
+    >
+  </div>
 
-  </section>
+  <div class="form-group">
+    <label for="configManagementIp">IP de administración (opcional)</label>
+    <input
+      id="configManagementIp"
+      type="text"
+      placeholder="Ej. 192.168.10.2"
+    >
+  </div>
+
+  
+<div class="form-group">
+  <label for="configAccessInterface">Puerto de acceso</label>
+  <input
+    id="configAccessInterface"
+    type="text"
+    value="GigabitEthernet1/0/1"
+    placeholder="Interfaz física"
+  >
+</div>
+
+<div class="form-group">
+  <label for="configAccessVlan">VLAN del puerto de acceso</label>
+  <select id="configAccessVlan">
+    <option value="20">VLAN 20 - Usuarios</option>
+    <option value="30">VLAN 30 - Voz</option>
+    <option value="40">VLAN 40 - CCTV</option>
+    <option value="60">VLAN 60 - Servidores</option>
+  </select>
+</div>
+
+<div class="form-group">
+  <label for="configTrunkInterface">Puerto troncal (opcional)</label>
+  <input
+    id="configTrunkInterface"
+    type="text"
+    value="GigabitEthernet1/0/24"
+    placeholder="Interfaz del enlace troncal"
+  >
+</div>
+
+
+  <button type="button" onclick="generateConfiguration()">
+    Generar configuración
+  </button>
+
+  <button type="button" onclick="copyConfiguration()">
+    Copiar configuración
+  </button>
+
+  <button type="button" onclick="downloadConfiguration()">
+  Descargar configuración (.txt)
+</button>
+
+  <div id="configMessage" class="message info">
+    Calcula VLSM antes de generar la configuración.
+  </div>
+
+  <h3>Comandos generados</h3>
+
+  <textarea
+    id="configOutput"
+    rows="22"
+    readonly
+    spellcheck="false"
+    placeholder="La configuración aparecerá aquí."
+  ></textarea>
+
+  <p>
+    <strong>Importante:</strong>
+    revisa la compatibilidad con el modelo y la versión del equipo
+    antes de aplicar los comandos. Esta herramienta genera una
+    plantilla; no configura dispositivos automáticamente.
+  </p>
+
+</section>
+
 
 
   <!-- =========================================
@@ -1892,6 +1977,254 @@ function renderTopology(calculation) {
       container.appendChild(segment);
     });
   });
+}
+
+
+/*
+  ============================================
+  GENERADOR DE CONFIGURACIONES
+  ============================================
+*/
+
+let lastGeneratedConfiguration = "";
+
+
+function generateConfiguration() {
+  const vendor = document.getElementById("configVendor").value;
+  const hostnameInput = document.getElementById("configHostname").value.trim();
+  const accessInterface = document.getElementById("configAccessInterface").value.trim();
+  const accessVlan = Number(document.getElementById("configAccessVlan").value);
+  const trunkInterface = document.getElementById("configTrunkInterface").value.trim();
+  const message = document.getElementById("configMessage");
+  const output = document.getElementById("configOutput");
+
+  const hostname = hostnameInput || "SW-CORE";
+
+  const showError = text => {
+    message.className = "message error";
+    message.textContent = text;
+  };
+
+  if (!/^[a-zA-Z0-9_-]{1,32}$/.test(hostname)) {
+    showError("Hostname inválido. Usa letras, números, guion o guion bajo.");
+    return;
+  }
+
+  if (!mainNetworks || mainNetworks.length === 0) {
+    showError("Genera los segmentos desde Requerimientos y calcula VLSM primero.");
+    return;
+  }
+
+  const vlanMap = new Map();
+
+  mainNetworks.forEach(network => {
+    (network.segments || []).forEach(segment => {
+      const vlan = Number(segment.vlan);
+
+      if (Number.isInteger(vlan) && vlan >= 1 && vlan <= 4094) {
+        vlanMap.set(vlan, String(segment.name || `VLAN_${vlan}`));
+      }
+    });
+  });
+
+  if (vlanMap.size === 0) {
+    showError("No se encontraron VLAN válidas en los segmentos.");
+    return;
+  }
+
+  if (!vlanMap.has(accessVlan)) {
+    showError(`La VLAN ${accessVlan} no existe en los segmentos VLSM actuales.`);
+    return;
+  }
+
+  // Solo acepta nombres simples de interfaces, sin comandos adicionales.
+  const validInterface = name =>
+    /^[a-zA-Z][a-zA-Z0-9/.-]{0,63}$/.test(name);
+
+  if (!validInterface(accessInterface)) {
+    showError("Revisa el nombre de la interfaz de acceso.");
+    return;
+  }
+
+  if (trunkInterface && !validInterface(trunkInterface)) {
+    showError("Revisa el nombre de la interfaz troncal.");
+    return;
+  }
+
+  if (
+    trunkInterface &&
+    accessInterface.toLowerCase() === trunkInterface.toLowerCase()
+  ) {
+    showError("El puerto de acceso y el troncal deben ser diferentes.");
+    return;
+  }
+
+  const safeVlanName = name =>
+    name.normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-zA-Z0-9_-]/g, "_")
+      .slice(0, 32) || "SEGMENTO";
+
+  const vlans = Array.from(vlanMap.keys()).sort((a, b) => a - b);
+  const vlanList = vlans.join(",");
+  const lines = [];
+
+  if (vendor === "cisco") {
+    lines.push(
+      "! NetBuilding V3 - Cisco IOS/IOS XE",
+      "! Verifica modelo, interfaces y VLAN antes de aplicar.",
+      "enable",
+      "configure terminal",
+      `hostname ${hostname}`,
+      "!"
+    );
+
+    for (const [vlan, name] of vlanMap) {
+      lines.push(
+        `vlan ${vlan}`,
+        ` name ${safeVlanName(name)}`,
+        " exit",
+        "!"
+      );
+    }
+
+    lines.push(
+      `interface ${accessInterface}`,
+      " description NETBUILDING_PUERTO_ACCESO",
+      " switchport mode access",
+      ` switchport access vlan ${accessVlan}`,
+      " no shutdown",
+      " exit",
+      "!"
+    );
+
+    if (trunkInterface) {
+      lines.push(
+        `interface ${trunkInterface}`,
+        " description NETBUILDING_ENLACE_TRONCAL",
+        " switchport mode trunk",
+        ` switchport trunk allowed vlan ${vlanList}`,
+        " no shutdown",
+        " exit",
+        "!"
+      );
+    }
+
+    lines.push(
+      "end",
+      "!",
+      "! Verificacion",
+      "show vlan brief",
+      "show interfaces status",
+      "show interfaces trunk",
+      "show running-config",
+      "!"
+    );
+
+  } else if (vendor === "huawei") {
+    lines.push(
+      "# NetBuilding V3 - Huawei VRP",
+      "# Verifica modelo, interfaces y VLAN antes de aplicar.",
+      "system-view",
+      `sysname ${hostname}`
+    );
+
+    for (const [vlan, name] of vlanMap) {
+      lines.push(
+        `vlan ${vlan}`,
+        ` description ${safeVlanName(name)}`,
+        " quit"
+      );
+    }
+
+    lines.push(
+      `interface ${accessInterface}`,
+      " description NETBUILDING_PUERTO_ACCESO",
+      " port link-type access",
+      ` port default vlan ${accessVlan}`,
+      " undo shutdown",
+      " quit"
+    );
+
+    if (trunkInterface) {
+      lines.push(
+        `interface ${trunkInterface}`,
+        " description NETBUILDING_ENLACE_TRONCAL",
+        " port link-type trunk",
+        ` port trunk allow-pass vlan ${vlans.join(" ")}`,
+        " undo shutdown",
+        " quit"
+      );
+    }
+
+    lines.push(
+      "return",
+      "# Verificacion",
+      "display vlan",
+      "display interface brief",
+      "display current-configuration",
+      "#"
+    );
+
+  } else {
+    showError("Selecciona Cisco IOS/IOS XE o Huawei VRP.");
+    return;
+  }
+
+  const config = lines.join("\n");
+  lastGeneratedConfiguration = config;
+  output.value = config;
+
+  message.className = "message success";
+  message.textContent =
+    "Configuración generada con VLAN, puerto de acceso y troncal. Verifica la compatibilidad del equipo antes de aplicarla.";
+}
+
+function copyConfiguration() {
+  const output = document.getElementById("configOutput");
+  const message = document.getElementById("configMessage");
+
+  if (!output.value.trim()) {
+    message.className = "message error";
+    message.textContent = "Primero genera una configuración.";
+    return;
+  }
+
+  output.focus();
+  output.select();
+
+  const copied = document.execCommand("copy");
+
+  message.className = copied ? "message success" : "message info";
+  message.textContent = copied
+    ? "Configuración copiada."
+    : "Selecciona el texto y cópialo manualmente con Ctrl+C.";
+}
+
+function downloadConfiguration() {
+  const output = document.getElementById("configOutput");
+  const vendor = document.getElementById("configVendor").value;
+  const message = document.getElementById("configMessage");
+
+  if (!output.value.trim()) {
+    message.className = "message error";
+    message.textContent = "Primero genera una configuración.";
+    return;
+  }
+
+  const blob = new Blob([output.value], {
+    type: "text/plain;charset=utf-8"
+  });
+
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `netbuilding-${vendor}-config.txt`;
+  link.click();
+  URL.revokeObjectURL(url);
+
+  message.className = "message success";
+  message.textContent = "Descarga solicitada.";
 }
 
 
