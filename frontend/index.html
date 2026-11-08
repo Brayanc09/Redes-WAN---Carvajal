@@ -16,7 +16,7 @@
   <title>Gestor de Redes WAN - Diseño y configuración</title>
 
   <style>
-    
+
 /* ================================
    ESTILOS GENERALES - CORTE 3
    ================================ */
@@ -1341,7 +1341,7 @@ hr {
        4. CONFIGURACIÓN
        ========================================= -->
 
-  
+
 <section id="configuracion" class="card hidden">
 
   <h2>Generación de configuraciones de red</h2>
@@ -1381,7 +1381,7 @@ hr {
     >
   </div>
 
-  
+
 <div class="form-group">
   <label for="configAccessInterface">Puerto de acceso</label>
   <input
@@ -1454,7 +1454,7 @@ hr {
        5. CIBERDEFENSA
        ========================================= -->
 
-  
+
 <section id="ciberdefensa" class="card hidden">
 
   <h2>Centro de Ciberdefensa</h2>
@@ -2957,7 +2957,7 @@ function generateConfiguration() {
       "#"
     );
 
-  
+
   } else if (vendor === "fortinet") {
 
     if (!trunkInterface) {
@@ -3117,7 +3117,7 @@ function downloadConfiguration() {
     ============================================
   */
 
-  
+
 
   function renderResults(calculation) {
 
@@ -3755,7 +3755,7 @@ function downloadConfiguration() {
     );
 
   }
-  
+
   /*
     ============================================
     CORTE 3 - MOTOR DE ANALISIS DE CIBERDEFENSA
@@ -3858,7 +3858,7 @@ function downloadConfiguration() {
 
   }
 
-  
+
   /*
     ============================================
     GENERADOR DE CONFIGURACIONES DE CIBERDEFENSA
@@ -3899,22 +3899,25 @@ function downloadConfiguration() {
       " "
     ];
 
-    if (vendor === "cisco") {
-
-      lines.push("===== CISCO IOS / IOS XE =====");
-
-      if (controls.ssh) {
-        lines.push(
-          "! SSH: requiere definir usuario y dominio segun politica.",
-          "ip domain-name empresa.local",
-          "crypto key generate rsa modulus 2048",
-          "ip ssh version 2",
-          "line vty 0 4",
-          " transport input ssh",
-          "!"
-        );
-      }
-
+if (vendor === "cisco") {
+if (controls.ssh) {
+    lines.push(
+        "! SSH: acceso seguro con autenticacion local.",
+        "! IMPORTANTE: reemplazar los marcadores antes de aplicar.",
+        "ip domain-name empresa.local",
+        "username <USUARIO_ADMIN> privilege 15 secret <CLAVE_SEGURA>",
+        "crypto key generate rsa general-keys modulus 2048",
+        "ip ssh version 2",
+        "ip ssh time-out 60",
+        "ip ssh authentication-retries 3",
+        "line vty 0 4",
+        " exec-timeout 5 0",
+        " login local",
+        " transport input ssh",
+        " exit",
+        "!"
+    );
+}
       if (controls.portSecurity) {
         lines.push(
           "! PORT SECURITY: aplicar en puertos de acceso compatibles.",
@@ -3928,13 +3931,23 @@ function downloadConfiguration() {
       }
 
       if (controls.dhcp) {
-        lines.push(
-          "! DHCP SNOOPING: revisar VLAN y puertos confiables.",
-          "ip dhcp snooping",
-          "ip dhcp snooping vlan 20,30,40,60",
-          "!"
-        );
-      }
+  lines.push(
+    "! DHCP SNOOPING: proteger contra servidores DHCP no autorizados.",
+    "! EJEMPLO: ajustar VLAN y puerto uplink a la topologia real.",
+    "ip dhcp snooping",
+    "ip dhcp snooping vlan 20,30,40,60",
+    "!",
+    "! PUERTO UPLINK: confiar solo si conecta hacia DHCP autorizado.",
+    "interface GigabitEthernet1/0/48",
+    " ip dhcp snooping trust",
+    " exit",
+    "!",
+    "! PUERTOS DE USUARIOS: permanecen NO confiables.",
+    "! VERIFICACION:",
+    "show ip dhcp snooping",
+    "show ip dhcp snooping binding"
+  );
+}
 
       if (controls.bpdu) {
         lines.push(
@@ -3956,25 +3969,40 @@ function downloadConfiguration() {
         );
       }
 
-      if (controls.dai) {
-        lines.push(
-          "! DYNAMIC ARP INSPECTION: requiere DHCP Snooping.",
-          "ip arp inspection vlan 20,30,40,60",
-          "!"
-        );
-      }
+      if (controls.dai && controls.dhcp) {
+  lines.push(
+    "! DYNAMIC ARP INSPECTION: requiere DHCP Snooping activo.",
+    "! Verificar que existan asociaciones DHCP antes de habilitarlo.",
+    "ip arp inspection vlan 20,30,40,60",
+    "!",
+    "! VERIFICACION:",
+    "show ip arp inspection",
+    "show ip arp inspection statistics"
+  );
+} else if (controls.dai && !controls.dhcp) {
+  lines.push(
+    "! DAI NO GENERADO.",
+    "! Selecciona tambien DHCP Snooping y verifica la tabla DHCP binding."
+  );
+}
 
       if (controls.acl) {
-        lines.push(
-          "! ACL: ejemplo de politica restrictiva.",
-          "ip access-list extended ACL-USUARIOS",
-          " permit ip 192.168.20.0 0.0.0.255 any",
-          " deny ip any any log",
-          "!",
-          "! Aplicar en la interfaz correspondiente tras validar.",
-          "! ip access-group ACL-USUARIOS in"
-        );
-      }
+  lines.push(
+    "! ACL: plantilla de control de trafico IPv4.",
+    "! EJEMPLO: permitir una red de origen autorizada.",
+    "! Ajustar la red y las reglas segun la politica real.",
+    "ip access-list extended ACL-USUARIOS",
+    " permit ip 192.168.20.0 0.0.0.255 any",
+    "!",
+    "! No se agrega DENY general para evitar bloqueos inesperados.",
+    "! Aplicar solamente despues de validar origen, destino e interfaz.",
+    "! interface GigabitEthernet1/0/1",
+    "! ip access-group ACL-USUARIOS in",
+    "!",
+    "! VERIFICACION:",
+    "show access-lists ACL-USUARIOS"
+  );
+}
 
       lines.push(
         "!",
@@ -3993,66 +4021,148 @@ function downloadConfiguration() {
       lines.push("===== HUAWEI VRP =====");
 
       if (controls.ssh) {
-        lines.push(
-          "# SSH: configurar usuario local y permisos segun politica.",
-          "stelnet server enable",
-          "ssh server-source -i Vlanif 1",
-          "# Verificar interfaz de administracion antes de aplicar."
-        );
-      }
+    lines.push(
+        "# SSH: acceso seguro mediante autenticacion AAA.",
+        "# Reemplazar los marcadores antes de aplicar.",
+        "stelnet server enable",
+        "aaa",
+        " local-user <USUARIO_ADMIN> password irreversible-cipher <CLAVE_SEGURA>",
+        " local-user <USUARIO_ADMIN> privilege level 15",
+        " local-user <USUARIO_ADMIN> service-type ssh",
+        " quit",
+        "user-interface vty 0 4",
+        " authentication-mode aaa",
+        " protocol inbound ssh",
+        " user privilege level 15",
+        " idle-timeout 5 0",
+        " quit",
+        "# VERIFICACION SSH",
+        "display ssh server status",
+        "display current-configuration configuration user-interface"
+    );
+}
 
-      if (controls.portSecurity) {
-        lines.push(
-          "# PORT SECURITY: ejemplo de control de MAC.",
-          "interface GigabitEthernet0/0/1",
-          " port-security enable",
-          " port-security max-mac-num 2",
-          " quit"
-        );
-      }
 
-      if (controls.dhcp) {
-        lines.push(
-          "# DHCP SNOOPING: verificar soporte y confianza de puertos.",
-          "dhcp snooping enable",
-          "dhcp snooping enable vlan 20 30 40 60"
-        );
-      }
+if (controls.portSecurity) {
+    lines.push(
+        "# PORT SECURITY: limitar direcciones MAC en puerto de acceso.",
+        "# No aplicar en enlaces troncales ni uplinks.",
+        "interface GigabitEthernet 0/0/1",
+        " port-security enable",
+        " port-security max-mac-num 2",
+        " port-security protect-action restrict",
+        " quit",
+        "# VERIFICACION PORT SECURITY",
+        "display port-security interface GigabitEthernet 0/0/1"
+    );
+}
 
-      if (controls.bpdu) {
-        lines.push(
-          "# BPDU PROTECTION: verificar modo STP y puerto edge.",
-          "stp bpdu-protection"
-        );
-      }
 
-      if (controls.storm) {
-        lines.push(
-          "# STORM CONTROL: ejemplo sujeto a soporte del equipo.",
-          "interface GigabitEthernet0/0/1",
-          " storm suppression broadcast 1",
-          " quit"
-        );
-      }
 
-      if (controls.dai) {
-        lines.push(
-          "# DAI: validar disponibilidad de ARP anti-attack.",
-          "# La sintaxis depende de la familia y version VRP.",
-          "# No se genera un comando automatico sin verificar soporte."
-        );
-      }
+if (controls.dhcp) {
+    lines.push(
+        "# DHCP SNOOPING: proteccion contra servidores DHCP no autorizados.",
+        "# Ajustar las interfaces segun la topologia real.",
+        "# Habilitar el servicio DHCP si el equipo lo requiere.",
+        "dhcp enable",
+        "dhcp snooping enable",
+        "# PUERTO HACIA CLIENTES: permanece no confiable.",
+        "interface GigabitEthernet 0/0/1",
+        " dhcp snooping enable",
+        " quit",
+        "# UPLINK HACIA SERVIDOR DHCP AUTORIZADO.",
+        "interface GigabitEthernet 0/0/48",
+        " dhcp snooping trusted",
+        " quit",
+        "# VERIFICACION",
+        "display dhcp snooping configuration",
+        "display dhcp snooping user-bind all"
+    );
+}
 
-      if (controls.acl) {
-        lines.push(
-          "# ACL: ejemplo de lista basica.",
-          "acl number 3000",
-          " rule 5 permit ip source 192.168.20.0 0.0.0.255",
-          " rule 10 deny ip",
-          " quit",
-          "# Asociar la ACL a la interfaz o servicio correspondiente."
-        );
-      }
+
+
+if (controls.bpdu) {
+    lines.push(
+        "# BPDU PROTECTION: proteger puertos de acceso contra BPDU no autorizadas.",
+        "# Aplicar solamente en interfaces conectadas a dispositivos finales.",
+        "stp bpdu-protection",
+        "interface GigabitEthernet 0/0/1",
+        " stp edged-port enable",
+        " quit",
+        "# VERIFICACION",
+        "display stp brief",
+        "display stp abnormal-interface"
+    );
+}
+
+
+
+if (controls.storm) {
+    lines.push(
+        "# STORM CONTROL: limitar trafico broadcast, multicast y unknown unicast.",
+        "# EJEMPLO: umbrales en paquetes por segundo (pps).",
+        "# Ajustar valores segun capacidad y trafico real.",
+        "interface GigabitEthernet0/0/1",
+        " storm-control broadcast min-rate 1000 max-rate 2000",
+        " storm-control multicast min-rate 1000 max-rate 2000",
+        " storm-control unicast min-rate 1000 max-rate 2000",
+        " storm-control interval 90",
+        " storm-control action block",
+        " storm-control enable log",
+        " quit",
+        "# VERIFICACION",
+        "display storm-control interface GigabitEthernet0/0/1"
+    );
+}
+
+
+
+if (controls.dai) {
+    lines.push(
+        "# DAI: inspeccion dinamica ARP contra suplantacion.",
+        "# REQUISITO: DHCP Snooping activo y tabla de asociaciones poblada.",
+        "# Aplicar sobre las VLAN de usuarios correspondientes.",
+        "vlan 20",
+        " arp anti-attack check user-bind enable",
+        " quit",
+        "vlan 30",
+        " arp anti-attack check user-bind enable",
+        " quit",
+        "vlan 40",
+        " arp anti-attack check user-bind enable",
+        " quit",
+        "vlan 60",
+        " arp anti-attack check user-bind enable",
+        " quit",
+        "# VERIFICACION",
+        "display dhcp snooping user-bind all",
+        "display arp"
+    );
+}
+
+
+
+if (controls.acl) {
+    lines.push(
+        "# ACL: plantilla de control de trafico IPv4.",
+        "# IMPORTANTE: completar reglas segun la politica de seguridad.",
+        "# No aplicar hasta validar origen, destino, servicios e interfaz.",
+        "acl number 3000",
+        "# EJEMPLO: permitir una red de origen autorizada.",
+        " rule 5 permit ip source 192.168.20.0 0.0.0.255",
+        "# No agregar deny general sin definir antes las excepciones.",
+        " quit",
+        "# APLICACION: seleccionar interfaz y direccion correctas.",
+        "# interface GigabitEthernet 0/0/1",
+        "# traffic-filter inbound acl 3000",
+        "# quit",
+        "# VERIFICACION",
+        "display acl 3000",
+        "display current-configuration filter traffic-filter"
+    );
+}
+
 
       lines.push(
         "# VERIFICACION",
@@ -4073,16 +4183,20 @@ function downloadConfiguration() {
       );
 
       if (controls.ssh) {
-        lines.push(
-          "# SSH: habilitar solamente en la interfaz administrativa.",
-          "# Ejemplo: restringir trusted hosts del administrador.",
-          "config system admin",
-          ' edit "admin"',
-          "  set trusthost1 192.168.10.0 255.255.255.0",
-          " next",
-          "end"
-        );
-      }
+  lines.push(
+    "# ADMINISTRACION SEGURA: restringir acceso administrativo.",
+    "# IMPORTANTE: ejemplo para el administrador existente.",
+    "# Verificar cuenta, subred administrativa y configuracion actual.",
+    "# No reemplazar otros trusted hosts sin revisar su necesidad.",
+    "config system admin",
+    ' edit "admin"',
+    "  set trusthost1 192.168.10.0 255.255.255.0",
+    " next",
+    "end",
+    "# VERIFICACION:",
+    "show system admin"
+  );
+}
 
       if (controls.portSecurity || controls.bpdu ||
           controls.dhcp || controls.storm || controls.dai) {
@@ -4094,19 +4208,33 @@ function downloadConfiguration() {
       }
 
       if (controls.acl) {
-        lines.push(
-          "# ACL / POLITICAS: ejemplo conceptual de politica.",
-          "# Definir interfaces, origen, destino y servicios reales.",
-          "config firewall policy",
-          " edit 0",
-          "  set name \"POLITICA_REVISAR\"",
-          "  set action deny",
-          "  set logtraffic all",
-          " next",
-          "end",
-          "# No instalar esta politica sin completar interfaces y objetos."
-        );
-      }
+  lines.push(
+    "# POLITICA DE FIREWALL: plantilla de referencia.",
+    "# No se genera una regla ejecutable porque faltan datos.",
+    "# Definir como minimo:",
+    "# - Interfaz de entrada y salida.",
+    "# - Direcciones de origen y destino.",
+    "# - Servicios y puertos permitidos.",
+    "# - Accion requerida: ACCEPT o DENY.",
+    "# - NAT y registro de trafico, segun el escenario.",
+    "#",
+    "# EJEMPLO DE ESTRUCTURA (NO EJECUTAR):",
+    "# config firewall policy",
+    "#  edit 0",
+    '#   set name "POLITICA_REVISAR"',
+    "#   set srcintf <INTERFAZ_ORIGEN>",
+    "#   set dstintf <INTERFAZ_DESTINO>",
+    "#   set srcaddr <OBJETO_ORIGEN>",
+    "#   set dstaddr <OBJETO_DESTINO>",
+    "#   set action <ACCEPT_O_DENY>",
+    "#   set schedule <HORARIO>",
+    "#   set service <SERVICIOS>",
+    "#  next",
+    "# end",
+    "# VERIFICACION:",
+    "show firewall policy"
+  );
+}
 
       lines.push(
         "# VERIFICACION",
@@ -4132,56 +4260,85 @@ function downloadConfiguration() {
       }
 
       if (controls.portSecurity) {
-        lines.push(
-          "# CONTROL DE MAC: revisar bridge y puertos.",
-          "# Utilizar listas de acceso y filtrado de bridge.",
-          "/interface bridge port print",
-          "/interface bridge host print"
-        );
-      }
-
+  lines.push(
+    "# CONTROL DE ACCESO MAC - MIKROTIK.",
+    "# No se genera una configuracion automatica universal.",
+    "# La implementacion depende del bridge, puertos y modelo.",
+    "# Revisar los dispositivos MAC autorizados antes de aplicar filtros.",
+    "# CONSULTA DE PUERTOS:",
+    "/interface bridge port print detail",
+    "# CONSULTA DE DIRECCIONES MAC APRENDIDAS:",
+    "/interface bridge host print",
+    "# VALIDAR: no bloquear uplinks ni dispositivos autorizados."
+  );
+}
       if (controls.dhcp) {
-        lines.push(
-          "# DHCP SNOOPING: requiere bridge compatible.",
-          "# Revisar puertos trusted y no trusted antes de habilitar.",
-          "/interface bridge print detail",
-          "# Configurar dhcp-snooping segun version RouterOS."
-        );
-      }
+  lines.push(
+    "# PROTECCION DHCP - MIKROTIK.",
+    "# Verificar las capacidades del equipo y version RouterOS.",
+    "# No se genera una configuracion automatica universal.",
+    "# Revisar la arquitectura del bridge y los puertos trusted.",
+    "# CONSULTA:",
+    "/interface bridge print detail",
+    "/interface bridge port print detail",
+    "# VALIDAR: servidor DHCP autorizado y puertos de usuarios."
+  );
+}
 
       if (controls.bpdu) {
-        lines.push(
-          "# BPDU: verificar proteccion STP y rol de puertos.",
-          "/interface bridge port print detail",
-          "# Aplicar bpdu-guard solo en puertos edge compatibles."
-        );
-      }
+  lines.push(
+    "# PROTECCION BPDU - MIKROTIK.",
+    "# Revisar bridge, protocolo STP/RSTP y topologia.",
+    "# No aplicar proteccion edge sin identificar los enlaces.",
+    "# CONSULTA:",
+    "/interface bridge print detail",
+    "/interface bridge port print detail",
+    "# VALIDAR: puertos edge y enlaces entre switches."
+  );
+}
 
       if (controls.storm) {
-        lines.push(
-          "# STORM CONTROL: verificar capacidades del switch chip.",
-          "/interface ethernet print stats",
-          "# Configurar limites segun modelo y trafico."
-        );
-      }
+  lines.push(
+    "# STORM CONTROL - MIKROTIK.",
+    "# La disponibilidad depende del modelo y switch chip.",
+    "# No se genera una configuracion automatica universal.",
+    "# CONSULTA:",
+    "/interface ethernet print stats",
+    "/interface ethernet switch print",
+    "# VALIDAR: soporte de hardware y umbrales de trafico."
+  );
+}
 
-      if (controls.dai) {
-        lines.push(
-          "# ARP: alternativa de control mediante ARP reply-only.",
-          "# Requiere registros estaticos o DHCP con binding validado.",
-          "/ip arp print",
-          "# No equivale a Dynamic ARP Inspection de Cisco."
-        );
-      }
+     if (controls.dai) {
+  lines.push(
+    "# PROTECCION ARP - MIKROTIK.",
+    "# RouterOS no implementa DAI de Cisco de forma equivalente.",
+    "# ARP reply-only puede utilizarse en escenarios especificos.",
+    "# Requiere planificar las asociaciones IP-MAC previamente.",
+    "# No activar sin validar DHCP, ARP y dispositivos autorizados.",
+    "# CONSULTA:",
+    "/ip arp print detail",
+    "/ip dhcp-server lease print detail",
+    "# VALIDAR: asociaciones IP-MAC y arquitectura de red."
+  );
+}
 
-      if (controls.acl) {
-        lines.push(
-          "# ACL: filtrar trafico administrativo.",
-          "/ip firewall filter print",
-          "# Crear reglas especificas segun origen, destino y servicio.",
-          "# Revisar el orden de las reglas antes de aplicarlas."
-        );
-      }
+     if (controls.acl) {
+  lines.push(
+    "# FIREWALL FILTER - MIKROTIK.",
+    "# No se generan reglas automaticas sin conocer la topologia.",
+    "# Definir previamente:",
+    "# - Direcciones de origen y destino.",
+    "# - Interfaces de entrada y salida.",
+    "# - Protocolos y puertos.",
+    "# - Politica de acceso y orden de las reglas.",
+    "# CONSULTA DE REGLAS:",
+    "/ip firewall filter print detail",
+    "# CONSULTA DE CONEXIONES:",
+    "/ip firewall connection print",
+    "# VALIDAR: evitar bloquear administracion y servicios esenciales."
+  );
+}
 
       lines.push(
         "# VERIFICACION",
@@ -4197,9 +4354,9 @@ function downloadConfiguration() {
 
     output.value = lines.join("\n");
 
-    message.className = "message success";
-    message.textContent =
-      "Plantilla generada. Revisa las advertencias y valida los comandos antes de aplicarlos.";
+    message.className = "message info";
+message.textContent =
+  "Plantilla generada. Contiene comandos y recomendaciones; verifica cuáles son aplicables a tu equipo antes de ejecutarlos.";
 
   }
 
