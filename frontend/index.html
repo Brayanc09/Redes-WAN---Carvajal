@@ -2162,7 +2162,13 @@ function calculateRequirements() {
 
     return;
   }
-
+const safeProjectName = projectName.replace(/[&<>"']/g, char => ({
+  "&": "&amp;",
+  "<": "&lt;",
+  ">": "&gt;",
+  '"': "&quot;",
+  "'": "&#39;"
+})[char]);
 
   const numericValues = [
     sites,
@@ -2194,22 +2200,38 @@ function calculateRequirements() {
   }
 
 
-  if (
-    sites < 1 ||
-    floors < 1 ||
-    unitsPerFloor < 1 ||
-    usersPerUnit < 1 ||
-    devicesPerUser < 1 ||
-    mbpsPerUser < 1 ||
-    uplink < 1
-  ) {
+  const integerValues = [
+  sites,
+  floors,
+  unitsPerFloor,
+  usersPerUnit,
+  devicesPerUser,
+  camerasPerUnit,
+  phonesPerUser,
+  servers
+];
 
-    showRequirementError(
-      "Sedes, pisos, áreas, usuarios, dispositivos, Mbps y uplink deben ser mayores que cero."
-    );
+if (!integerValues.every(Number.isInteger)) {
+  showRequirementError(
+    "Las cantidades de sedes, pisos, áreas, usuarios y dispositivos deben ser números enteros."
+  );
+  return;
+}
 
-    return;
-  }
+if (
+  sites < 1 ||
+  floors < 1 ||
+  unitsPerFloor < 1 ||
+  usersPerUnit < 1 ||
+  devicesPerUser < 1 ||
+  mbpsPerUser < 1 ||
+  uplink < 1
+) {
+  showRequirementError(
+    "Sedes, pisos, áreas, usuarios, dispositivos, Mbps y uplink deben ser mayores que cero."
+  );
+  return;
+}
 
 
   if (concurrency > 100 || reserve > 100) {
@@ -2321,7 +2343,7 @@ function calculateRequirements() {
 
       <p>
         <strong>Proyecto:</strong>
-        ${projectName}
+        ${safeProjectName}
       </p>
 
 
@@ -2474,6 +2496,37 @@ function generateSegmentsFromRequirements() {
     alert("Debes ingresar una red IPv4 principal.");
     return;
   }
+  const numericValues = [
+  sites,
+  floors,
+  unitsPerFloor,
+  usersPerUnit,
+  devicesPerUser,
+  camerasPerUnit,
+  phonesPerUser,
+  servers
+];
+
+if (
+  numericValues.some(
+    value => !Number.isFinite(value) || value < 0
+  )
+) {
+  alert("Los valores deben ser válidos y no negativos.");
+  return;
+}
+
+if (
+  !numericValues.every(Number.isInteger) ||
+  sites < 1 ||
+  floors < 1 ||
+  unitsPerFloor < 1 ||
+  usersPerUnit < 1 ||
+  devicesPerUser < 1
+) {
+  alert("Las cantidades deben ser enteras. Sedes, pisos, áreas, usuarios y dispositivos por usuario deben ser mayores que cero.");
+  return;
+}
 
 
   const totalUnits =
