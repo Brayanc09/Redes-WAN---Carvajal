@@ -1,88 +1,96 @@
-# Gestor de Redes WAN
+# Gestor de Redes WAN – NetBuilding V3
 
-Plataforma académica para el diseño, direccionamiento, planificación, visualización y seguridad de redes WAN. Permite calcular subredes mediante VLSM, organizar segmentos de red, diseñar topologías y generar plantillas de configuración para equipos de diferentes fabricantes.
+**Plataforma académica para el diseño, direccionamiento, configuración y ciberdefensa de redes WAN y LAN.**
 
-## Versión actual
-
-**Gestor de Redes WAN — V3**
+**Versión actual: 3.0.0**
 
 ## Objetivo del proyecto
 
-Facilitar el diseño y la administración de redes mediante herramientas de planificación de infraestructura, direccionamiento IPv4, segmentación mediante VLAN, representación de topologías y generación de configuraciones para equipos de diferentes fabricantes.
+Facilitar el diseño y la administración de redes mediante herramientas de direccionamiento IP, planificación de VLAN, representación de topologías, generación de configuraciones para diferentes fabricantes y recomendaciones de seguridad.
 
 ## Funcionalidades desarrolladas
 
-1. **Requerimientos de red:** registro y cálculo de usuarios, dispositivos, infraestructura y necesidades de conectividad.
-2. **Subnetting y VLSM:** cálculo de subredes según la cantidad de hosts requerida, con soporte para múltiples redes principales.
-3. **Direccionamiento IPv4:** cálculo de máscaras, rangos de direcciones, broadcast y capacidad de las redes.
-4. **Topologías:** representación lógica de la infraestructura y diseñador visual para agregar, conectar, mover, guardar y recuperar dispositivos.
-5. **Configuraciones multivendor:** generación de plantillas de configuración para Cisco IOS, Huawei VRP, Fortinet FortiOS y MikroTik RouterOS.
-6. **Ciberdefensa:** generación de plantillas y recomendaciones de seguridad para diferentes fabricantes, incluyendo controles de protección y comandos de verificación.
+1. **Datos y requerimientos:** registro de usuarios, dispositivos y necesidades de conectividad.
+2. **Subnetting y VLSM:** cálculo de subredes IPv4 según la cantidad de hosts requerida, con soporte para múltiples redes principales.
+3. **Topología:** representación gráfica de dispositivos y conexiones, con opciones para agregar, mover, conectar, eliminar, guardar y recuperar diseños.
+4. **Configuraciones multivendor:** generación de plantillas para Cisco IOS/IOS XE, Huawei VRP, Fortinet FortiOS y MikroTik RouterOS.
+5. **Ciberdefensa:** recomendaciones y plantillas de seguridad relacionadas con SSH, Port Security, DHCP Snooping, BPDU Guard, Storm Control, DAI y ACL, según las capacidades de cada fabricante.
 
 ## Tecnologías utilizadas
 
-- HTML5.
-- CSS3.
-- JavaScript.
+- HTML, CSS y JavaScript.
 - Node.js para ejecutar pruebas automatizadas.
 - Git y GitHub para el control de versiones.
+- Visual Studio Code como entorno de desarrollo.
 
 ## Estructura del proyecto
 
-- `frontend/`: interfaz web principal.
-- `frontend/js/subnetting.js`: lógica de cálculo VLSM y direccionamiento.
-- `tests/`: pruebas automatizadas.
-- `docs/`: documentación y evidencias.
-- `versions/`: versiones anteriores del proyecto.
-- `.env.example`: ejemplo de variables de entorno.
-- `.gitignore`: archivos excluidos del control de versiones.
-- `CHANGELOG.md`: historial de cambios.
-
-## Cómo ejecutar el proyecto
-
-1. Descargar o clonar el repositorio.
-2. Abrir la carpeta del proyecto.
-3. Abrir `frontend/index.html` en un navegador web.
-4. Ingresar los requerimientos de red.
-5. Ejecutar los cálculos de subnetting y VLSM.
-6. Consultar las topologías y generar las plantillas de configuración disponibles.
-
-No se requiere un servidor backend para utilizar la interfaz principal.
+```text
+NetBuilding_V3/
+├── frontend/
+│   ├── index.html
+│   └── js/
+│       └── subnetting.js
+├── tests/
+│   ├── vlsm.test.js
+│   └── vlsm_test.html
+├── docs/
+│   ├── capturas/
+│   ├── informe-corte2.pdf
+│   ├── informe-corte3.pdf
+│   ├── manual.md
+│   ├── seguridad.md
+│   ├── politicas-ia.md
+│   └── pruebas.md
+├── versions/
+├── .env.example
+├── .gitignore
+├── CHANGELOG.md
+└── README.md
+```
 
 ## Pruebas automatizadas
 
-Se requiere Node.js para ejecutar las pruebas de VLSM.
-
-Desde la carpeta raíz del proyecto, ejecutar:
+Para ejecutar las pruebas del módulo VLSM, utiliza Node.js desde la carpeta raíz del proyecto:
 
 ```bash
 node tests/vlsm.test.js
 ```
 
-Las pruebas verifican conversiones IPv4, cálculo CIDR, asignación VLSM, múltiples redes principales, detección de solapamientos y validaciones de capacidad.
+**Resultado registrado:** 10 pruebas aprobadas y 0 fallidas.
 
-## Seguridad
+## Seguridad y consideraciones
 
-- No almacenar contraseñas, tokens, claves privadas ni datos reales de clientes en el código o en Git.
-- Validar los datos antes de procesarlos.
-- Revisar las configuraciones generadas antes de aplicarlas en equipos reales.
-- Verificar la compatibilidad de los comandos con el fabricante, modelo y versión del equipo.
-- Las plantillas de ciberdefensa requieren validación antes de su ejecución.
+- Validación de entradas para reducir errores.
+- Protección frente a la interpretación de contenido HTML no confiable.
+- Exclusión de archivos sensibles mediante `.gitignore`.
+- Revisión manual de las configuraciones antes de aplicarlas en equipos reales.
+- Las plantillas deben adaptarse al fabricante, modelo y versión del dispositivo.
 
-## Limitaciones
+## Limitaciones actuales
 
-- El direccionamiento IPv6 no forma parte del alcance implementado en esta versión.
-- Las configuraciones generadas son plantillas de referencia y requieren adaptación a la infraestructura real.
-- La compatibilidad de los comandos depende del modelo y versión del sistema operativo del equipo.
+- No existe integración de un agente de inteligencia artificial en esta versión.
+- La aplicación genera plantillas de configuración, pero no realiza despliegues automáticos sobre equipos físicos.
+- Las recomendaciones de ciberdefensa dependen de las capacidades de cada fabricante.
 
-## Evidencias y documentación
+## Documentación
 
-Las capturas de pantalla y evidencias del desarrollo se encuentran en `docs/capturas/`.
+Los documentos y evidencias del proyecto se encuentran en la carpeta `docs/`:
 
-## Alcance académico
+- `informe-corte3.pdf`: informe técnico del proyecto.
+- `manual.md`: manual de usuario.
+- `seguridad.md`: documentación de seguridad.
+- `politicas-ia.md`: políticas para el uso futuro de inteligencia artificial.
+- `pruebas.md`: documentación de pruebas y validaciones.
 
-Este proyecto corresponde a la versión V3 del Gestor de Redes WAN y reúne funcionalidades de planificación, direccionamiento IPv4, VLSM, diseño de topologías, generación de configuraciones multivendor y ciberdefensa.
+## Repositorio
 
-El proyecto se desarrolla por etapas y puede ampliarse de acuerdo con los requisitos académicos.
+**GitHub:** https://github.com/Brayanc09/Redes-WAN---Carvajal
 
-Las configuraciones generadas deben validarse antes de utilizarse en una red de producción.
+**Versión:** NetBuilding V3 – 3.0.0
+
+**Rama de desarrollo:** `feature/corte3`
+
+---
+
+*Proyecto académico desarrollado como herramienta de apoyo para el diseño y la documentación de infraestructuras de redes WAN y LAN.*
