@@ -1,63 +1,96 @@
-# Gestor de Redes WAN
+# Gestor de Redes WAN – NetBuilding V3
 
-Plataforma académica para el diseño, direccionamiento, configuración y seguridad de redes WAN. Permite planificar redes, calcular subredes mediante VLSM, visualizar topologías y generar plantillas de configuración para equipos de red.
+**Plataforma académica para el diseño, direccionamiento, configuración y ciberdefensa de redes WAN y LAN.**
 
-## Versión actual
-
-Gestor de Redes WAN — V3
+**Versión actual: 3.0.0**
 
 ## Objetivo del proyecto
 
-Facilitar el diseño y la administración de redes mediante herramientas de direccionamiento IP, planificación de VLAN, representación de topologías y generación de configuraciones para equipos de diferentes fabricantes.
+Facilitar el diseño y la administración de redes mediante herramientas de direccionamiento IP, planificación de VLAN, representación de topologías, generación de configuraciones para diferentes fabricantes y recomendaciones de seguridad.
 
 ## Funcionalidades desarrolladas
 
-1. **Requerimientos de red:** registro de usuarios, dispositivos y necesidades de conectividad.
-2. **Subnetting VLSM:** cálculo de subredes según la cantidad de hosts requerida.
-3. **Topología:** representación lógica de la red y sus segmentos.
-4. **Configuraciones:** generación de plantillas para Cisco IOS y Huawei VRP.
-5. **Ciberdefensa:** módulo contemplado en el proyecto, cuyo alcance se ampliará progresivamente.
+1. **Datos y requerimientos:** registro de usuarios, dispositivos y necesidades de conectividad.
+2. **Subnetting y VLSM:** cálculo de subredes IPv4 según la cantidad de hosts requerida, con soporte para múltiples redes principales.
+3. **Topología:** representación gráfica de dispositivos y conexiones, con opciones para agregar, mover, conectar, eliminar, guardar y recuperar diseños.
+4. **Configuraciones multivendor:** generación de plantillas para Cisco IOS/IOS XE, Huawei VRP, Fortinet FortiOS y MikroTik RouterOS.
+5. **Ciberdefensa:** recomendaciones y plantillas de seguridad relacionadas con SSH, Port Security, DHCP Snooping, BPDU Guard, Storm Control, DAI y ACL, según las capacidades de cada fabricante.
 
 ## Tecnologías utilizadas
 
 - HTML, CSS y JavaScript.
 - Node.js para ejecutar pruebas automatizadas.
 - Git y GitHub para el control de versiones.
+- Visual Studio Code como entorno de desarrollo.
 
 ## Estructura del proyecto
 
-- `frontend/`: interfaz web.
-- `frontend/js/subnetting.js`: lógica de cálculo VLSM.
-- `tests/`: pruebas automatizadas.
-- `docs/`: documentación y evidencias.
-- `versions/`: versiones anteriores del proyecto.
+```text
+NetBuilding_V3/
+├── frontend/
+│   ├── index.html
+│   └── js/
+│       └── subnetting.js
+├── tests/
+│   ├── vlsm.test.js
+│   └── vlsm_test.html
+├── docs/
+│   ├── capturas/
+│   ├── informe-corte2.pdf
+│   ├── informe-corte3.pdf
+│   ├── manual.md
+│   ├── seguridad.md
+│   ├── politicas-ia.md
+│   └── pruebas.md
+├── versions/
+├── .env.example
+├── .gitignore
+├── CHANGELOG.md
+└── README.md
+```
 
-## Cómo ejecutar el proyecto
+## Pruebas automatizadas
 
-1. Abrir `frontend/index.html` en un navegador web.
-2. Ingresar los requerimientos de red.
-3. Ejecutar el cálculo de subnetting y revisar los resultados.
-4. Consultar la topología y generar las plantillas de configuración disponibles.
-
-Para ejecutar las pruebas automatizadas, instala Node.js y ejecuta desde la carpeta raíz:
+Para ejecutar las pruebas del módulo VLSM, utiliza Node.js desde la carpeta raíz del proyecto:
 
 ```bash
 node tests/vlsm.test.js
 ```
 
-## Seguridad
+**Resultado registrado:** 10 pruebas aprobadas y 0 fallidas.
 
-- No almacenar contraseñas, tokens, claves privadas ni datos reales de clientes en el código o en Git.
-- Validar los datos antes de procesarlos.
-- Revisar las configuraciones generadas antes de aplicarlas en equipos reales.
-- Verificar la compatibilidad de los comandos con el modelo y la versión del equipo.
+## Seguridad y consideraciones
 
-## Evidencias y documentación
+- Validación de entradas para reducir errores.
+- Protección frente a la interpretación de contenido HTML no confiable.
+- Exclusión de archivos sensibles mediante `.gitignore`.
+- Revisión manual de las configuraciones antes de aplicarlas en equipos reales.
+- Las plantillas deben adaptarse al fabricante, modelo y versión del dispositivo.
 
-Las capturas de pantalla se encuentran en `docs/capturas/`.
+## Limitaciones actuales
 
-## Alcance académico
+- No existe integración de un agente de inteligencia artificial en esta versión.
+- La aplicación genera plantillas de configuración, pero no realiza despliegues automáticos sobre equipos físicos.
+- Las recomendaciones de ciberdefensa dependen de las capacidades de cada fabricante.
 
-Este proyecto se desarrolla por etapas. Las funcionalidades documentadas corresponden al avance actual y se ampliarán de acuerdo con los requisitos de los siguientes cortes académicos.
+## Documentación
 
-Las configuraciones generadas son plantillas y deben validarse antes de utilizarse en una red de producción.
+Los documentos y evidencias del proyecto se encuentran en la carpeta `docs/`:
+
+- `informe-corte3.pdf`: informe técnico del proyecto.
+- `manual.md`: manual de usuario.
+- `seguridad.md`: documentación de seguridad.
+- `politicas-ia.md`: políticas para el uso futuro de inteligencia artificial.
+- `pruebas.md`: documentación de pruebas y validaciones.
+
+## Repositorio
+
+**GitHub:** https://github.com/Brayanc09/Redes-WAN---Carvajal
+
+**Versión:** NetBuilding V3 – 3.0.0
+
+**Rama de desarrollo:** `feature/corte3`
+
+---
+
+*Proyecto académico desarrollado como herramienta de apoyo para el diseño y la documentación de infraestructuras de redes WAN y LAN.*
